@@ -32,6 +32,7 @@ public class BeanManager {
     public BeanManager(ApplicationContext applicationContext, LifeCycleManager lifeCycleManager) {
         this.applicationContext = applicationContext;
         this.lifeCycleManager = lifeCycleManager;
+        registerNewBean(applicationContext);
     }
 
     private <T> void registerNewBean(T bean) {
