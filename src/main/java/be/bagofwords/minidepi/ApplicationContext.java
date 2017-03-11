@@ -79,4 +79,8 @@ public class ApplicationContext {
     public String getProperty(String name, String defaultValue) {
         return propertyManager.getProperty(name, defaultValue);
     }
+
+    public String getApplicationName() {
+        return propertyManager.getProperty("application_name");
+    }
 }

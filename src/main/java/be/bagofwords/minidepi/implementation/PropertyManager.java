@@ -48,18 +48,6 @@ public class PropertyManager {
             properties.load(new FileInputStream(config.propertiesPath));
         }
         properties.putAll(config.properties);
-        initializeApplicationName();
-    }
-
-    private void initializeApplicationName() {
-        this.applicationName = properties.getProperty("application_name");
-        if (this.applicationName == null) {
-            this.applicationName = "some_application";
-        }
-    }
-
-    public String getApplicationName() {
-        return applicationName;
     }
 
     public String getProperty(String name, String defaultValue) {
