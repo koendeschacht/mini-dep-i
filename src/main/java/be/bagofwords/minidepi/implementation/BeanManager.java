@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class BeanManager {
 
@@ -35,8 +32,11 @@ public class BeanManager {
         registerNewBean(applicationContext);
     }
 
-    private <T> void registerNewBean(T bean) {
+    private <T> void registerNewBean(T bean, String... names) {
         Set<String> qualifiers = getQualifiers(bean);
+        for (String name : names) {
+            qualifiers.add(name);
+        }
         beans.add(new QualifiedBean(qualifiers, bean));
         if (bean instanceof LifeCycleBean) {
             lifeCycleManager.ensureBeanCorrectState((LifeCycleBean) bean);
@@ -44,118 +44,142 @@ public class BeanManager {
     }
 
     private <T> Set<String> getQualifiers(T bean) {
+        return getQualifiers(bean.getClass());
+    }
+
+    private <T> Set<String> getQualifiers(Class<T> beanType) {
+        Annotation[] annotations = beanType.getAnnotations();
+        return getQualifiers(annotations);
+    }
+
+    private <T> Set<String> getQualifiers(Annotation[] annotations) {
         Set<String> qualifiers = new HashSet<>();
-        Annotation[] annotations = bean.getClass().getAnnotations();
         for (Annotation annotation : annotations) {
-            if (annotation.getClass().equals(Bean.class)) {
+            Class<? extends Annotation> annotationType = annotation.annotationType();
+            if (annotationType.equals(Bean.class)) {
                 Bean beanAnnotation = (Bean) annotation;
-                qualifiers.add(beanAnnotation.name());
+                String[] names = beanAnnotation.value();
+                for (String name : names) {
+                    if (name.length() > 0) {
+                        qualifiers.add(name);
+                    }
+                }
+            } else if (annotationType.equals(Inject.class)) {
+                Inject injectAnnotation = (Inject) annotation;
+                String name = injectAnnotation.value();
+                if (name.length() > 0) {
+                    qualifiers.add(name);
+                }
             }
         }
         return qualifiers;
     }
 
-    public <T> List<T> getBeans(Class<T> interfaceClass) {
-        return getBeans(interfaceClass, null);
-    }
-
-    public <T> List<T> getBeans(Class<T> interfaceClass, String name) {
+    public <T> List<T> getBeans(Class<T> beanType, String... names) {
         List<T> result = new ArrayList<>();
         for (QualifiedBean qualifiedBean : beans) {
-            if (interfaceClass.isAssignableFrom(qualifiedBean.bean.getClass())) {
-                if (name == null || qualifiedBean.qualifiers.contains(name)) {
-                    result.add(interfaceClass.cast(qualifiedBean.bean));
+            if (beanType.isAssignableFrom(qualifiedBean.bean.getClass())) {
+                boolean matchesQualifiers;
+                if (names.length == 0) {
+                    matchesQualifiers = true;
+                } else {
+                    matchesQualifiers = false;
+                    for (String name : names) {
+                        matchesQualifiers |= qualifiedBean.qualifiers.contains(name);
+                    }
+                }
+                if (matchesQualifiers) {
+                    result.add(beanType.cast(qualifiedBean.bean));
                 }
             }
         }
         return result;
     }
 
-    public <T> T getBeanIfPresent(Class<T> interfaceClass) {
-        List<T> beans = getBeans(interfaceClass);
-        return returnBeanOrNullOrError(interfaceClass, beans);
-    }
-
-    private <T> T returnBeanOrNullOrError(Class<T> interfaceClass, List<T> beans) {
+    public <T> T getBeanIfPresent(Class<T> beanType, String... names) {
+        List<T> beans = getBeans(beanType, names);
         if (beans.size() == 1) {
             return beans.get(0);
         } else if (beans.size() == 0) {
             return null;
         } else {
-            throw new ApplicationContextException("Found " + beans.size() + " beans of type " + interfaceClass);
-        }
-    }
-
-    public <T> T getBeanIfPresent(Class<T> interfaceClass, String name) {
-        List<T> beans = getBeans(interfaceClass, name);
-        if (beans.size() == 1) {
-            return beans.get(0);
-        } else if (beans.size() == 0) {
-            return null;
-        } else {
-            throw new ApplicationContextException("Found " + beans.size() + " beans of type " + interfaceClass + " and name " + name);
-        }
-    }
-
-    public <T> T getBean(Class<T> interfaceClass, String name) {
-        List<T> matchingBeans = getBeans(interfaceClass, name);
-        if (matchingBeans.size() == 1) {
-            return matchingBeans.get(0);
-        } else {
-            createBean(interfaceClass);
-            matchingBeans = getBeans(interfaceClass, name);
-            if (matchingBeans.size() == 1) {
-                return matchingBeans.get(0);
-            } else {
-                throw new ApplicationContextException("Could not find bean with type " + interfaceClass + " and name " + name);
+            String errorMessage = "Found " + beans.size() + " beans of type " + beanType;
+            if (names.length > 0) {
+                errorMessage += " and one of names " + Arrays.toString(names);
             }
+            throw new ApplicationContextException(errorMessage);
         }
     }
 
-    public <T> T getBean(Class<T> interfaceClass) {
-        List<T> matchingBeans = getBeans(interfaceClass);
+    public <T> T getBean(Class<T> beanType, String... names) {
+        List<T> matchingBeans = getBeans(beanType, names);
         if (matchingBeans.size() == 1) {
             return matchingBeans.get(0);
         } else {
-            return createBean(interfaceClass);
+            //Does this type have the correct qualifiers? If yes, we create it
+            Set<String> qualifiers = getQualifiers(beanType);
+            boolean qualifiersMatch = names.length == 0;
+            for (String name : names) {
+                qualifiersMatch |= qualifiers.contains(name);
+            }
+            if (qualifiersMatch) {
+                createBean(beanType);
+                matchingBeans = getBeans(beanType, names);
+                if (matchingBeans.size() == 1) {
+                    return matchingBeans.get(0);
+                }
+            }
+            String errorMessage = "Could not find bean with type " + beanType;
+            if (names.length > 0) {
+                errorMessage += " and names " + Arrays.toString(names);
+            }
+            throw new ApplicationContextException(errorMessage);
         }
     }
 
-    public <T> void declareBean(Class<T> beanClass) {
-        getBean(beanClass);
+    private <T> boolean canInstantiateBean(Class<T> beanType) {
+        return !Modifier.isAbstract(beanType.getModifiers());
     }
 
-    private <T> T createBean(Class<T> beanClass) {
-        if (beansBeingCreated.contains(beanClass)) {
-            throw new ApplicationContextException("Dependency while creating bean " + beanClass);
+    private <T> T createBean(Class<T> beanType, String... extraNames) {
+        if (!canInstantiateBean(beanType)) {
+            throw new ApplicationContextException("Can not instantiate bean of type " + beanType + ". Is this an abstract type?");
         }
-        beansBeingCreated.add(beanClass);
+        if (beanType.equals(ApplicationContext.class)) {
+            throw new ApplicationContextException("Refusing to create ApplicationContext as bean");
+        }
+        if (beansBeingCreated.contains(beanType)) {
+            throw new ApplicationContextException("The bean " + beanType + " is already being created. Possibly cycle?");
+        }
+        beansBeingCreated.add(beanType);
         try {
-            T newBean = constructBean(beanClass);
-            declareBean(newBean);
+            T newBean = constructBean(beanType);
+            declareBean(newBean, extraNames);
             logger.info("Created bean " + newBean);
             return newBean;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new ApplicationContextException("Failed to create bean " + beanClass, e);
+            throw new ApplicationContextException("Failed to create bean " + beanType, e);
         } finally {
-            beansBeingCreated.remove(beanClass);
+            beansBeingCreated.remove(beanType);
         }
     }
 
     private <T> T constructBean(Class<T> beanClass) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        //Constructor with a single argument, the application context?
         try {
-            //Constructor with a single argument, the application context?
             return beanClass.getConstructor(ApplicationContext.class).newInstance(applicationContext);
         } catch (NoSuchMethodException exp) {
             //OK, continue
         }
         //Constructor with @Inject annotation?
         for (Constructor<?> constructor : beanClass.getConstructors()) {
-            if (hasInjectAnnotation(constructor.getAnnotations())) {
+            if (hasInjectAnnotation(constructor.getDeclaredAnnotations())) {
                 Class<?>[] parameterTypes = constructor.getParameterTypes();
+                Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
                 Object[] args = new Object[parameterTypes.length];
                 for (int i = 0; i < args.length; i++) {
-                    args[i] = getBean(parameterTypes[i]);
+                    Set<String> qualifiers = getQualifiers(parameterAnnotations[i]);
+                    args[i] = getBean(parameterTypes[i], qualifiers.toArray(new String[qualifiers.size()]));
                 }
                 return (T) constructor.newInstance(args);
             }
@@ -169,9 +193,16 @@ public class BeanManager {
         }
     }
 
-    public void declareBean(Object bean) {
+    public <T> void declareBean(Class<T> beanClass, String... names) {
+        List<T> beans = getBeans(beanClass, names);
+        if (beans.isEmpty()) {
+            createBean(beanClass, names);
+        }
+    }
+
+    public void declareBean(Object bean, String... names) {
         try {
-            registerNewBean(bean);
+            registerNewBean(bean, names);
             Class<?> currClass = bean.getClass();
             while (!currClass.equals(Object.class)) {
                 wireFields(bean, currClass);
@@ -203,7 +234,9 @@ public class BeanManager {
                             throw new ApplicationContextException("Could not determine generic type of field " + field.getName() + " in " + bean);
                         }
                     } else {
-                        newValue = getBean(fieldType);
+                        Set<String> qualifiersSet = getQualifiers(field.getAnnotations());
+                        String[] qualifiers = qualifiersSet.toArray(new String[qualifiersSet.size()]);
+                        newValue = getBean(fieldType, qualifiers);
                     }
                     field.set(bean, newValue);
                 }

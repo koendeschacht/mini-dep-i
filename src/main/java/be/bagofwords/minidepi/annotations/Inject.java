@@ -15,4 +15,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({CONSTRUCTOR, FIELD})
 @Retention(RUNTIME)
 public @interface Inject {
+    String value() default "";
 }

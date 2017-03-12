@@ -56,20 +56,24 @@ public class ApplicationContext {
         lifeCycleManager.waitUntilTerminated();
     }
 
-    public void declareBean(Object bean) {
-        beanManager.declareBean(bean);
+    public void declareBean(Object bean, String... names) {
+        beanManager.declareBean(bean, names);
     }
 
-    public <T> List<T> getBeans(Class<T> type) {
-        return beanManager.getBeans(type);
+    public <T> List<T> getBeans(Class<T> type, String... names) {
+        return beanManager.getBeans(type, names);
     }
 
-    public <T> T getBean(Class<T> beanType) {
-        return beanManager.getBean(beanType);
+    public <T> T getBean(Class<T> beanType, String... names) {
+        return beanManager.getBean(beanType, names);
     }
 
-    public void declareBean(Class beanClass) {
-        beanManager.declareBean(beanClass);
+    public <T> T getBeanIfPresent(Class<T> beanType, String... names) {
+        return beanManager.getBeanIfPresent(beanType, names);
+    }
+
+    public void declareBean(Class beanClass, String... names) {
+        beanManager.declareBean(beanClass, names);
     }
 
     public String getProperty(String name) {
