@@ -9,7 +9,7 @@ import be.bagofwords.minidepi.testbeans.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestQualifiers {
+public class QualifiersTest {
 
     @Test
     public void testQualifiedField_DeclareClass() {

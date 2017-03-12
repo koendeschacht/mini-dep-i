@@ -249,7 +249,7 @@ public class BeanManager {
             if (annotation.annotationType().equals(Inject.class)) {
                 return true;
             }
-            String name = annotation.getClass().getCanonicalName();
+            String name = annotation.annotationType().getCanonicalName();
             if (name != null && name.equals("javax.inject.Inject")) {
                 return true;
             }

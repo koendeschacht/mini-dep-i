@@ -5,20 +5,23 @@
 
 package be.bagofwords.minidepi;
 
+import be.bagofwords.minidepi.testbeans.Dao1;
+import be.bagofwords.minidepi.testbeans.Dao2;
 import be.bagofwords.minidepi.testbeans.Plugin1;
 import be.bagofwords.minidepi.testbeans.Plugin1Subclass;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class SimpleWiringTests {
+public class SimpleWiringTest {
 
     @Test
     public void wireCreatedObject() {
+        System.out.println("Simple wiring test");
         ApplicationContext applicationContext = new ApplicationContext();
         Plugin1 myPlugin = new Plugin1();
         applicationContext.declareBean(myPlugin);
         Assert.assertNotNull(myPlugin.getDao1());
-        Assert.assertEquals(3, applicationContext.getBeans(Object.class).size());
+        Assert.assertEquals(4, applicationContext.getBeans(Object.class).size());
     }
 
     @Test
@@ -28,6 +31,14 @@ public class SimpleWiringTests {
         applicationContext.declareBean(myPlugin);
         Assert.assertNotNull(myPlugin.getDao1());
         Assert.assertNotNull(myPlugin.getDao2());
-        Assert.assertEquals(4, applicationContext.getBeans(Object.class).size());
+        Assert.assertEquals(5, applicationContext.getBeans(Object.class).size());
+    }
+
+    @Test
+    public void testGetIfPresent() {
+        ApplicationContext applicationContext = new ApplicationContext();
+        applicationContext.declareBean(Dao1.class);
+        Assert.assertNotNull(applicationContext.getBeanIfPresent(Dao1.class));
+        Assert.assertNull(applicationContext.getBeanIfPresent(Dao2.class));
     }
 }

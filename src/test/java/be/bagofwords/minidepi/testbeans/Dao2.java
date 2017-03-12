@@ -12,7 +12,7 @@ public class Dao2 extends TestBean {
     private DatabaseService databaseService;
 
     @Inject
-    private Dao2(DatabaseService databaseService) {
+    public Dao2(DatabaseService databaseService) {
         this.databaseService = databaseService;
     }
 

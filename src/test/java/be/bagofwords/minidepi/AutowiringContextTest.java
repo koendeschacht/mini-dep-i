@@ -9,7 +9,7 @@ import be.bagofwords.minidepi.testbeans.BeanThatWiresContext;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestAutowiringContext {
+public class AutowiringContextTest {
 
     @Test
     public void testAutoWiringContext() {

@@ -11,7 +11,7 @@ import be.bagofwords.minidepi.testbeans.Dao1;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestApplicationManager {
+public class ApplicationManagerTest {
 
     static boolean runnableRan;
     static boolean runnableStopped;

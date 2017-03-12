@@ -8,6 +8,7 @@ package be.bagofwords.minidepi;
 import be.bagofwords.minidepi.testbeans.Application;
 import be.bagofwords.minidepi.testbeans.BeanState;
 import be.bagofwords.minidepi.testbeans.DatabaseService;
+import be.bagofwords.minidepi.testbeans.SlowBean;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,6 +44,30 @@ public class LifeCycleTest {
         }).start();
         applicationContext.waitUntilTerminated();
         Assert.assertEquals(BeanState.STOPPED, application.beanState);
+    }
+
+    @Test
+    public void testSlowBean() {
+        final ApplicationContext applicationContext = new ApplicationContext();
+
+        SlowBean slowBean = applicationContext.getBean(SlowBean.class);
+        Assert.assertEquals(BeanState.INITIALIZED, slowBean.beanState);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                applicationContext.start();
+            }
+        }).start();
+        applicationContext.waitUntilBeanStarted(slowBean);
+        Assert.assertEquals(BeanState.STARTED, slowBean.beanState);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                applicationContext.terminate();
+            }
+        }).start();
+        applicationContext.waitUntilBeanStopped(slowBean);
+        Assert.assertEquals(BeanState.STOPPED, slowBean.beanState);
     }
 
 }

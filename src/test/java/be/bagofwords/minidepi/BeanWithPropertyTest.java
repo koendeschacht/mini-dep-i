@@ -34,4 +34,20 @@ public class BeanWithPropertyTest {
         Assert.assertEquals("some_value", beanWithProperties.getProperty());
     }
 
+    @Test
+    public void testGettingPropertyFromContext() {
+        Map<String, String> config = new HashMap<>();
+        config.put("my_property", "some_value");
+        ApplicationContext context = new ApplicationContext(PropertyConfiguration.create().use(config));
+        Assert.assertEquals("some_value", context.getProperty("my_property"));
+    }
+
+    @Test
+    public void testGettingApplicationName() {
+        Map<String, String> config = new HashMap<>();
+        config.put("application_name", "cool_app");
+        ApplicationContext context = new ApplicationContext(PropertyConfiguration.create().use(config));
+        Assert.assertEquals("cool_app", context.getApplicationName());
+    }
+
 }
