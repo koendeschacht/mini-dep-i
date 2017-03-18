@@ -25,12 +25,8 @@ public class ApplicationContext {
     }
 
     public ApplicationContext(Map<String, String> config) {
-        this(PropertyConfiguration.create().readDefaultProperties().useEnvironmentVariableIfPresent().use(config));
-    }
-
-    public ApplicationContext(PropertyConfiguration propertyConfiguration) {
         try {
-            propertyManager = new PropertyManager(propertyConfiguration);
+            propertyManager = new PropertyManager(config);
         } catch (IOException exp) {
             throw new ApplicationContextException("Failed to read properties", exp);
         }

@@ -7,47 +7,39 @@ package be.bagofwords.minidepi.implementation;
 
 import be.bagofwords.minidepi.ApplicationContext;
 import be.bagofwords.minidepi.ApplicationContextException;
-import be.bagofwords.minidepi.PropertyConfiguration;
+import be.bagofwords.minidepi.properties.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import java.util.*;
 
 public class PropertyManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationContext.class);
     private Properties properties;
-    private String applicationName;
+    private List<PropertyProvider> propertyProviders = Arrays.asList(new DefaultPropertiesPropertyProvider(),
+            new PropertyFilePropertyProvider(), new SocketPropertyProvider(), new SystemPropertiesPropertyProvider());
 
-    public PropertyManager(PropertyConfiguration config) throws IOException {
+    public PropertyManager(Map<String, String> config) throws IOException {
         properties = new Properties();
-        if (config.readDefaultProperties) {
-            InputStream defaultPropertiesInputStream = this.getClass().getResourceAsStream("/default.properties");
-            if (defaultPropertiesInputStream == null) {
-                logger.info("Could not read default.properties");
-            } else {
-                properties.load(defaultPropertiesInputStream);
-            }
-        }
-        if (config.useEnvironmentVariable || config.useEnvironmentVariableIfPresent) {
-            String propertyFile = System.getProperty("property-file");
-            if (propertyFile == null) {
-                if (!config.useEnvironmentVariable) {
-                    logger.warn("No property file specified. You can specify one with -Dproperty-file=/some/path");
-                } else {
-                    throw new ApplicationContextException("No property file specified. You need to specify one with -Dproperty-file=/some/path");
+        properties.putAll(config);
+        Map<String, String> lastTriggers = new HashMap<>();
+        boolean finished = false;
+        while (!finished) {
+            finished = true;
+            for (PropertyProvider propertyProvider : propertyProviders) {
+                String trigger = propertyProvider.triggerProperty();
+                if (trigger == null || properties.getProperty(trigger) != null) {
+                    String currValue = trigger == null ? "run-once" : properties.getProperty(trigger);
+                    if (!lastTriggers.containsKey(trigger) || !Objects.equals(lastTriggers.get(trigger), currValue)) {
+                        propertyProvider.addProperties(properties, logger);
+                        lastTriggers.put(trigger, currValue);
+                        finished = false;
+                    }
                 }
-            } else {
-                properties.load(new FileInputStream(propertyFile));
             }
         }
-        if (config.propertiesPath != null) {
-            properties.load(new FileInputStream(config.propertiesPath));
-        }
-        properties.putAll(config.properties);
     }
 
     public String getProperty(String name, String defaultValue) {
