@@ -23,7 +23,7 @@ public class WirePluginsTest {
     @Test
     public void wirePluginsTestNonEmpty_DeclareClass() {
         ApplicationContext applicationContext = new ApplicationContext();
-        applicationContext.declareBean(Plugin1.class);
+        applicationContext.registerBean(Plugin1.class);
         Application application = applicationContext.getBean(Application.class);
         Assert.assertNotNull(application.getPlugins());
         Assert.assertEquals(1, application.getPlugins().size());
@@ -34,7 +34,7 @@ public class WirePluginsTest {
     public void wirePluginsTestNonEmpty_DeclareObject() {
         ApplicationContext applicationContext = new ApplicationContext();
         Plugin1 plugin1 = new Plugin1();
-        applicationContext.declareBean(plugin1);
+        applicationContext.registerBean(plugin1);
         Application application = applicationContext.getBean(Application.class);
         Assert.assertNotNull(application.getPlugins());
         Assert.assertEquals(1, application.getPlugins().size());

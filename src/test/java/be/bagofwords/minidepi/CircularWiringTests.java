@@ -16,7 +16,7 @@ public class CircularWiringTests {
     public void wireCircularBeans() {
         ApplicationContext applicationContext = new ApplicationContext();
         CircularDao1 circularDao1 = new CircularDao1();
-        applicationContext.declareBean(circularDao1);
+        applicationContext.registerBean(circularDao1);
         Assert.assertNotNull(circularDao1.getDao1());
         Assert.assertNotNull(circularDao1.getCircularDao2());
     }
@@ -25,7 +25,7 @@ public class CircularWiringTests {
     public void wireSelfReferentialBean() {
         ApplicationContext applicationContext = new ApplicationContext();
         SelfReferentialDao selfReferentialDao = new SelfReferentialDao();
-        applicationContext.declareBean(selfReferentialDao);
+        applicationContext.registerBean(selfReferentialDao);
         Assert.assertNotNull(selfReferentialDao.getSelf());
     }
 

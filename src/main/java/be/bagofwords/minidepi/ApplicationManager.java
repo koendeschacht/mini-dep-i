@@ -43,9 +43,8 @@ public class ApplicationManager {
     private static void runImpl(Runnable main, ApplicationContext applicationContext, boolean wireRunnable) {
         try {
             if (wireRunnable) {
-                applicationContext.declareBean(main);
+                applicationContext.registerBean(main);
             }
-            applicationContext.start();
             main.run();
         } catch (Throwable exp) {
             logger.error("Received unexpected exception, terminating application.", exp);

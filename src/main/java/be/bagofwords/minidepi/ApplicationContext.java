@@ -36,10 +36,6 @@ public class ApplicationContext {
         }
     }
 
-    public void start() {
-        lifeCycleManager.startApplication();
-    }
-
     public void terminate() {
         lifeCycleManager.terminateApplication();
     }
@@ -56,12 +52,12 @@ public class ApplicationContext {
         lifeCycleManager.waitUntilTerminated();
     }
 
-    public void declareBean(Object bean, String... names) {
-        beanManager.declareBean(bean, names);
+    public void registerBean(Object bean, String... names) {
+        beanManager.registerBean(bean, names);
     }
 
-    public void declareBean(Class beanClass, String... names) {
-        beanManager.declareBean(beanClass, names);
+    public void registerBean(Class beanClass, String... names) {
+        beanManager.registerBean(beanClass, names);
     }
 
     public void wireBean(Object bean) {

@@ -26,7 +26,6 @@ public class LifeCycleManager {
     private final ApplicationContext applicationContext;
 
     private boolean applicationWasTerminated = false;
-    private boolean applicationWasStarted = false;
 
     public LifeCycleManager(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -42,18 +41,6 @@ public class LifeCycleManager {
             logger.info("Application has terminated. Bye!");
         } else {
             logger.warn("Application termination requested while applications was already terminated");
-        }
-    }
-
-    public void startApplication() {
-        if (!applicationWasStarted) {
-            List<? extends LifeCycleBean> lifeCycleBeans = applicationContext.getBeans(LifeCycleBean.class);
-            for (LifeCycleBean bean : lifeCycleBeans) {
-                waitUntilBeanStarted(bean);
-            }
-            applicationWasStarted = true;
-        } else {
-            logger.info("Application was already started...");
         }
     }
 
@@ -95,12 +82,8 @@ public class LifeCycleManager {
         return applicationWasTerminated;
     }
 
-    public boolean applicationWasStarted() {
-        return applicationWasStarted;
-    }
-
     public void ensureBeanCorrectState(LifeCycleBean bean) {
-        if (applicationWasStarted() && !applicationWasTerminated()) {
+        if (!applicationWasTerminated()) {
             waitUntilBeanStarted(bean);
         }
         if (applicationWasTerminated()) {

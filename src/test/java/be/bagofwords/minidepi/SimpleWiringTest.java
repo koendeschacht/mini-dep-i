@@ -19,7 +19,7 @@ public class SimpleWiringTest {
         System.out.println("Simple wiring test");
         ApplicationContext applicationContext = new ApplicationContext();
         Plugin1 myPlugin = new Plugin1();
-        applicationContext.declareBean(myPlugin);
+        applicationContext.registerBean(myPlugin);
         Assert.assertNotNull(myPlugin.getDao1());
         Assert.assertEquals(4, applicationContext.getBeans(Object.class).size());
     }
@@ -28,7 +28,7 @@ public class SimpleWiringTest {
     public void wireCreatedObjectSubclass() {
         ApplicationContext applicationContext = new ApplicationContext();
         Plugin1Subclass myPlugin = new Plugin1Subclass();
-        applicationContext.declareBean(myPlugin);
+        applicationContext.registerBean(myPlugin);
         Assert.assertNotNull(myPlugin.getDao1());
         Assert.assertNotNull(myPlugin.getDao2());
         Assert.assertEquals(5, applicationContext.getBeans(Object.class).size());
@@ -37,7 +37,7 @@ public class SimpleWiringTest {
     @Test
     public void testGetIfPresent() {
         ApplicationContext applicationContext = new ApplicationContext();
-        applicationContext.declareBean(Dao1.class);
+        applicationContext.registerBean(Dao1.class);
         Assert.assertNotNull(applicationContext.getBeanIfPresent(Dao1.class));
         Assert.assertNull(applicationContext.getBeanIfPresent(Dao2.class));
     }

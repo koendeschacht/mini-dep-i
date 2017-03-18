@@ -19,9 +19,6 @@ public class LifeCycleTest {
         ApplicationContext applicationContext = new ApplicationContext();
         Application application = applicationContext.getBean(Application.class);
         DatabaseService databaseService = applicationContext.getBean(DatabaseService.class);
-        Assert.assertEquals(BeanState.INITIALIZED, application.beanState);
-        Assert.assertEquals(BeanState.INITIALIZED, databaseService.beanState);
-        applicationContext.start();
         Assert.assertEquals(BeanState.STARTED, application.beanState);
         Assert.assertEquals(BeanState.STARTED, databaseService.beanState);
         applicationContext.terminate();
@@ -33,8 +30,6 @@ public class LifeCycleTest {
     public void testLifeCycleAsync() throws InterruptedException {
         final ApplicationContext applicationContext = new ApplicationContext();
         final Application application = applicationContext.getBean(Application.class);
-        Assert.assertEquals(BeanState.INITIALIZED, application.beanState);
-        applicationContext.start();
         Assert.assertEquals(BeanState.STARTED, application.beanState);
         new Thread(new Runnable() {
             @Override
@@ -50,12 +45,12 @@ public class LifeCycleTest {
     public void testSlowBean() {
         final ApplicationContext applicationContext = new ApplicationContext();
 
-        SlowBean slowBean = applicationContext.getBean(SlowBean.class);
-        Assert.assertEquals(BeanState.INITIALIZED, slowBean.beanState);
+        final SlowBean slowBean = new SlowBean();
+
         new Thread(new Runnable() {
             @Override
             public void run() {
-                applicationContext.start();
+                applicationContext.registerBean(slowBean);
             }
         }).start();
         applicationContext.waitUntilBeanStarted(slowBean);

@@ -32,18 +32,15 @@ public class BeanManager {
     public BeanManager(ApplicationContext applicationContext, LifeCycleManager lifeCycleManager) {
         this.applicationContext = applicationContext;
         this.lifeCycleManager = lifeCycleManager;
-        registerNewBean(applicationContext);
+        saveBean(applicationContext);
     }
 
-    private <T> void registerNewBean(T bean, String... names) {
+    private <T> void saveBean(T bean, String... names) {
         Set<String> qualifiers = getQualifiers(bean);
         for (String name : names) {
             qualifiers.add(name);
         }
         beans.add(new QualifiedBean(qualifiers, bean));
-        if (bean instanceof LifeCycleBean) {
-            lifeCycleManager.ensureBeanCorrectState((LifeCycleBean) bean);
-        }
     }
 
     private <T> Set<String> getQualifiers(T bean) {
@@ -157,7 +154,7 @@ public class BeanManager {
         beansBeingCreated.add(beanType);
         try {
             T newBean = constructBean(beanType);
-            declareBean(newBean, extraNames);
+            registerBean(newBean, extraNames);
             logger.info("Created bean " + newBean);
             return newBean;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -196,16 +193,19 @@ public class BeanManager {
         }
     }
 
-    public <T> void declareBean(Class<T> beanClass, String... names) {
+    public <T> void registerBean(Class<T> beanClass, String... names) {
         List<T> beans = getBeans(beanClass, names);
         if (beans.isEmpty()) {
             createBean(beanClass, names);
         }
     }
 
-    public void declareBean(Object bean, String... names) {
-        registerNewBean(bean, names);
+    public void registerBean(Object bean, String... names) {
+        saveBean(bean, names);
         wireBean(bean);
+        if (bean instanceof LifeCycleBean) {
+            lifeCycleManager.ensureBeanCorrectState((LifeCycleBean) bean);
+        }
     }
 
     public void wireBean(Object bean) {
