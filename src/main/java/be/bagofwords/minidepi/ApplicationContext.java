@@ -60,6 +60,14 @@ public class ApplicationContext {
         beanManager.declareBean(bean, names);
     }
 
+    public void declareBean(Class beanClass, String... names) {
+        beanManager.declareBean(beanClass, names);
+    }
+
+    public void wireBean(Object bean) {
+        beanManager.wireBean(bean);
+    }
+
     public <T> List<T> getBeans(Class<T> type, String... names) {
         return beanManager.getBeans(type, names);
     }
@@ -72,10 +80,6 @@ public class ApplicationContext {
         return beanManager.getBeanIfPresent(beanType, names);
     }
 
-    public void declareBean(Class beanClass, String... names) {
-        beanManager.declareBean(beanClass, names);
-    }
-
     public String getProperty(String name) {
         return propertyManager.getProperty(name);
     }
@@ -85,6 +89,6 @@ public class ApplicationContext {
     }
 
     public String getApplicationName() {
-        return propertyManager.getProperty("application_name");
+        return propertyManager.getProperty("application_name", "some_application");
     }
 }

@@ -5,7 +5,9 @@
 
 package be.bagofwords.minidepi;
 
-import be.bagofwords.minidepi.testbeans.BeanWithProperties;
+import be.bagofwords.minidepi.testbeans.BeanWithIntegerProperty;
+import be.bagofwords.minidepi.testbeans.BeanWithPropertiesFromApplicationContext;
+import be.bagofwords.minidepi.testbeans.BeanWithWiredProperties;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,22 +18,37 @@ public class BeanWithPropertyTest {
 
     @Test
     public void testBeanWithPropertyDefaultValue() {
-        BeanWithProperties beanWithProperties = new ApplicationContext(PropertyConfiguration.create()).getBean(BeanWithProperties.class);
-        Assert.assertEquals("default_value", beanWithProperties.getProperty());
+        ApplicationContext applicationContext = new ApplicationContext(PropertyConfiguration.create());
+        BeanWithPropertiesFromApplicationContext bean1 = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
+        Assert.assertEquals("default_value", bean1.getProperty());
+        BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
+        Assert.assertEquals("default_value", bean2.getProperty());
     }
 
     @Test
     public void testBeanWithPropertyDefaultProperties() {
-        BeanWithProperties beanWithProperties = new ApplicationContext(PropertyConfiguration.create().readDefaultProperties()).getBean(BeanWithProperties.class);
-        Assert.assertEquals("value_from_default.properties", beanWithProperties.getProperty());
+        ApplicationContext applicationContext = new ApplicationContext(PropertyConfiguration.create().readDefaultProperties());
+        BeanWithPropertiesFromApplicationContext bean1 = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
+        Assert.assertEquals("value_from_default.properties", bean1.getProperty());
+        BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
+        Assert.assertEquals("value_from_default.properties", bean2.getProperty());
     }
 
     @Test
     public void testBeanWithPropertyConfiguredValue() {
         Map<String, String> config = new HashMap<>();
         config.put("my_property", "some_value");
-        BeanWithProperties beanWithProperties = new ApplicationContext(PropertyConfiguration.create().use(config)).getBean(BeanWithProperties.class);
-        Assert.assertEquals("some_value", beanWithProperties.getProperty());
+        ApplicationContext applicationContext = new ApplicationContext(PropertyConfiguration.create().use(config));
+        BeanWithPropertiesFromApplicationContext bean = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
+        Assert.assertEquals("some_value", bean.getProperty());
+        BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
+        Assert.assertEquals("some_value", bean2.getProperty());
+    }
+
+    @Test
+    public void testBeanWithIntegerProperty() {
+        BeanWithIntegerProperty bean = new ApplicationContext().getBean(BeanWithIntegerProperty.class);
+        Assert.assertEquals(42, bean.getProperty());
     }
 
     @Test

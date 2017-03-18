@@ -10,9 +10,12 @@ import be.bagofwords.minidepi.ApplicationContextException;
 import be.bagofwords.minidepi.LifeCycleBean;
 import be.bagofwords.minidepi.annotations.Bean;
 import be.bagofwords.minidepi.annotations.Inject;
+import be.bagofwords.minidepi.annotations.Property;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyEditor;
+import java.beans.PropertyEditorManager;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
@@ -201,8 +204,12 @@ public class BeanManager {
     }
 
     public void declareBean(Object bean, String... names) {
+        registerNewBean(bean, names);
+        wireBean(bean);
+    }
+
+    public void wireBean(Object bean) {
         try {
-            registerNewBean(bean, names);
             Class<?> currClass = bean.getClass();
             while (!currClass.equals(Object.class)) {
                 wireFields(bean, currClass);
@@ -216,31 +223,68 @@ public class BeanManager {
     private void wireFields(Object bean, Class<?> beanClass) throws IllegalAccessException {
         Field[] fields = beanClass.getDeclaredFields();
         for (Field field : fields) {
-            if (hasInjectAnnotation(field.getAnnotations())) {
-                field.setAccessible(true);
-                if (field.get(bean) == null) {
-                    Class<?> fieldType = field.getType();
-                    Object newValue;
-                    if (fieldType == List.class) {
-                        Type genericType = field.getGenericType();
-                        if (genericType instanceof ParameterizedType) {
-                            Type[] genericTypeArgs = ((ParameterizedType) genericType).getActualTypeArguments();
-                            if (genericTypeArgs.length == 1) {
-                                newValue = getBeans((Class) genericTypeArgs[0]);
-                            } else {
-                                throw new ApplicationContextException("Received multiple types for List???");
-                            }
-                        } else {
-                            throw new ApplicationContextException("Could not determine generic type of field " + field.getName() + " in " + bean);
-                        }
-                    } else {
-                        Set<String> qualifiersSet = getQualifiers(field.getAnnotations());
-                        String[] qualifiers = qualifiersSet.toArray(new String[qualifiersSet.size()]);
-                        newValue = getBean(fieldType, qualifiers);
-                    }
-                    field.set(bean, newValue);
+            Annotation[] annotations = field.getAnnotations();
+            if (hasInjectAnnotation(annotations)) {
+                injectDependentBean(bean, field);
+            } else {
+                Property propertyAnnotation = field.getAnnotation(Property.class);
+                if (propertyAnnotation != null) {
+                    injectProperty(bean, field, propertyAnnotation);
                 }
             }
+        }
+    }
+
+    private void injectProperty(Object bean, Field field, Property propertyAnnotation) throws IllegalAccessException {
+        String value;
+        if ("".equals(propertyAnnotation.defaultValue())) {
+            value = applicationContext.getProperty(propertyAnnotation.value());
+        } else {
+            value = applicationContext.getProperty(propertyAnnotation.value(), propertyAnnotation.defaultValue());
+        }
+        field.setAccessible(true);
+
+        Object convertedValue;
+        if (field.getType() != String.class) {
+            convertedValue = convertValue(field, value, bean);
+        } else {
+            convertedValue = value;
+        }
+        field.set(bean, convertedValue);
+    }
+
+    private Object convertValue(Field field, String value, Object bean) {
+        PropertyEditor editor = PropertyEditorManager.findEditor(field.getType());
+        if (editor == null) {
+            throw new RuntimeException("Can not convert to type " + field.getType() + " in bean " + bean);
+        }
+        editor.setAsText(value);
+        return editor.getValue();
+    }
+
+    private void injectDependentBean(Object bean, Field field) throws IllegalAccessException {
+        field.setAccessible(true);
+        if (field.get(bean) == null) {
+            Class<?> fieldType = field.getType();
+            Object newValue;
+            if (fieldType == List.class) {
+                Type genericType = field.getGenericType();
+                if (genericType instanceof ParameterizedType) {
+                    Type[] genericTypeArgs = ((ParameterizedType) genericType).getActualTypeArguments();
+                    if (genericTypeArgs.length == 1) {
+                        newValue = getBeans((Class) genericTypeArgs[0]);
+                    } else {
+                        throw new ApplicationContextException("Received multiple types for List???");
+                    }
+                } else {
+                    throw new ApplicationContextException("Could not determine generic type of field " + field.getName() + " in " + bean);
+                }
+            } else {
+                Set<String> qualifiersSet = getQualifiers(field.getAnnotations());
+                String[] qualifiers = qualifiersSet.toArray(new String[qualifiersSet.size()]);
+                newValue = getBean(fieldType, qualifiers);
+            }
+            field.set(bean, newValue);
         }
     }
 

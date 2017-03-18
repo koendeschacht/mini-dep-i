@@ -8,11 +8,11 @@ package be.bagofwords.minidepi.testbeans;
 import be.bagofwords.minidepi.ApplicationContext;
 import be.bagofwords.minidepi.annotations.Inject;
 
-public class BeanWithProperties {
+public class BeanWithPropertiesFromApplicationContext {
 
     private String property ;
 
-    public BeanWithProperties(ApplicationContext applicationContext) {
+    public BeanWithPropertiesFromApplicationContext(ApplicationContext applicationContext) {
         property = applicationContext.getProperty("my_property", "default_value");
     }
 
