@@ -28,7 +28,7 @@ public class BeanWithPropertyTest {
     @Test
     public void testBeanWithPropertyDefaultProperties() {
         HashMap<String, String> config = new HashMap<>();
-        config.put("read-default-properties", "yes");
+        config.put("read-default-properties", "true");
         ApplicationContext applicationContext = new ApplicationContext(config);
         BeanWithPropertiesFromApplicationContext bean1 = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
         Assert.assertEquals("value_from_default.properties", bean1.getProperty());

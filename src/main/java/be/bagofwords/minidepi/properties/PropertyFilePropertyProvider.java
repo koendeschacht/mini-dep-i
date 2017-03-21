@@ -7,6 +7,7 @@ package be.bagofwords.minidepi.properties;
 
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -24,7 +25,11 @@ public class PropertyFilePropertyProvider implements PropertyProvider {
         if (path == null) {
             throw new RuntimeException("No \"property-file\" property specified");
         }
-        properties.load(new FileInputStream(path));
+        File propertiesFile = new File(path);
+        if (!propertiesFile.exists()) {
+            throw new RuntimeException("Could not find file " + propertiesFile.getAbsolutePath());
+        }
+        properties.load(new FileInputStream(propertiesFile));
         logger.info("Read properties from " + path);
     }
 }

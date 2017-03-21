@@ -44,7 +44,7 @@ public class ApplicationContext {
         lifeCycleManager.waitUntilBeanStarted(bean);
     }
 
-    public void waitUntilTerminated() throws InterruptedException {
+    public void waitUntilTerminated()  {
         lifeCycleManager.waitUntilTerminated();
     }
 

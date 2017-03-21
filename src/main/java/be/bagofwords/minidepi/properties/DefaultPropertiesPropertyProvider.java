@@ -20,12 +20,14 @@ public class DefaultPropertiesPropertyProvider implements PropertyProvider {
 
     @Override
     public void addProperties(Properties properties, Logger logger) throws IOException {
-        InputStream defaultPropertiesInputStream = this.getClass().getResourceAsStream("/default.properties");
-        if (defaultPropertiesInputStream == null) {
-            throw new IOException("Could not read resource /default.properties");
-        } else {
-            properties.load(defaultPropertiesInputStream);
+        if ("true".equals(properties.get(triggerProperty()))) {
+            InputStream defaultPropertiesInputStream = this.getClass().getResourceAsStream("/default.properties");
+            if (defaultPropertiesInputStream == null) {
+                throw new IOException("Could not read resource /default.properties");
+            } else {
+                properties.load(defaultPropertiesInputStream);
+            }
+            logger.info("Read properties from resource default.properties");
         }
-        logger.info("Read properties from resource default.properties");
     }
 }

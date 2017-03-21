@@ -26,6 +26,7 @@ public class LifeCycleManager {
     private final ApplicationContext applicationContext;
 
     private boolean applicationWasTerminated = false;
+    private boolean terminatedRequested = false;
 
     public LifeCycleManager(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -33,6 +34,7 @@ public class LifeCycleManager {
 
     public synchronized void terminateApplication() {
         if (!applicationWasTerminated) {
+            terminatedRequested = true;
             List<? extends LifeCycleBean> lifeCycleBeans = applicationContext.getBeans(LifeCycleBean.class);
             for (LifeCycleBean bean : lifeCycleBeans) {
                 waitUntilBeanStopped(bean);
@@ -72,9 +74,15 @@ public class LifeCycleManager {
         startedBeans.add(bean);
     }
 
-    public void waitUntilTerminated() throws InterruptedException {
+    public void waitUntilTerminated() {
         while (!applicationWasTerminated) {
-            Thread.sleep(100);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                if (!terminatedRequested) {
+                    throw new RuntimeException("Received InterruptedException while no termination was requested");
+                }
+            }
         }
     }
 
