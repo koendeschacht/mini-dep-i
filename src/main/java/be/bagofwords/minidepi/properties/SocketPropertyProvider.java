@@ -15,16 +15,16 @@ public class SocketPropertyProvider implements PropertyProvider {
 
     @Override
     public String triggerProperty() {
-        return "socket-properties-host";
+        return "socket.properties.host";
     }
 
     @Override
     public void addProperties(Properties properties, Logger logger) throws IOException {
-        String host = properties.getProperty("socket-properties-host");
-        int port = Integer.parseInt(properties.getProperty("socket-properties-port"));
-        String applicationName = properties.getProperty("application-name");
-        String applicationTag = properties.getProperty("application-tag");
-        String environment = properties.getProperty("application-environment");
+        String host = properties.getProperty("socket.properties.host");
+        int port = Integer.parseInt(properties.getProperty("socket.properties.port"));
+        String applicationName = properties.getProperty("application.name");
+        String applicationTag = properties.getProperty("application.tag");
+        String environment = properties.getProperty("application.environment");
         SocketConnection socketConnection = new SocketConnection(host, port, "load-properties");
         socketConnection.writeString(applicationName);
         socketConnection.writeString(applicationTag);
