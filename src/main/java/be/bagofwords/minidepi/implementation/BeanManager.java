@@ -8,6 +8,7 @@ package be.bagofwords.minidepi.implementation;
 import be.bagofwords.minidepi.ApplicationContext;
 import be.bagofwords.minidepi.ApplicationContextException;
 import be.bagofwords.minidepi.LifeCycleBean;
+import be.bagofwords.minidepi.PropertyNotFoundException;
 import be.bagofwords.minidepi.annotations.Bean;
 import be.bagofwords.minidepi.annotations.Inject;
 import be.bagofwords.minidepi.annotations.Property;
@@ -236,11 +237,16 @@ public class BeanManager {
     }
 
     private void injectProperty(Object bean, Field field, Property propertyAnnotation) throws IllegalAccessException {
+        String propertyName = propertyAnnotation.value();
         String value;
-        if ("".equals(propertyAnnotation.defaultValue())) {
-            value = applicationContext.getProperty(propertyAnnotation.value());
-        } else {
-            value = applicationContext.getProperty(propertyAnnotation.value(), propertyAnnotation.defaultValue());
+        try {
+            if ("".equals(propertyAnnotation.defaultValue())) {
+                value = applicationContext.getProperty(propertyName);
+            } else {
+                value = applicationContext.getProperty(propertyName, propertyAnnotation.defaultValue());
+            }
+        } catch (PropertyNotFoundException exp) {
+            throw new ApplicationContextException("Could not find property \"" + propertyName + "\" for bean " + bean, exp);
         }
         field.setAccessible(true);
 

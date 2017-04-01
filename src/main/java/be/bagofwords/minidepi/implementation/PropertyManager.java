@@ -6,7 +6,7 @@
 package be.bagofwords.minidepi.implementation;
 
 import be.bagofwords.minidepi.ApplicationContext;
-import be.bagofwords.minidepi.ApplicationContextException;
+import be.bagofwords.minidepi.PropertyNotFoundException;
 import be.bagofwords.minidepi.properties.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class PropertyManager {
     public String getProperty(String name) {
         String value = properties.getProperty(name);
         if (value == null) {
-            throw new ApplicationContextException("The configuration option " + name + " was not found");
+            throw new PropertyNotFoundException("The configuration option " + name + " was not found");
         }
         return value;
     }
