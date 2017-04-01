@@ -60,6 +60,12 @@ public class LifeCycleManager {
         stoppedBeans.add(bean);
     }
 
+    public synchronized <T extends LifeCycleBean> void waitUntilBeansStopped(List<T> beans) {
+        for (LifeCycleBean bean : beans) {
+            waitUntilBeanStopped(bean);
+        }
+    }
+
     public synchronized void waitUntilBeanStarted(LifeCycleBean bean) {
         if (beansBeingStarted.contains(bean)) {
             throw new ApplicationContextException("The stop() method of bean " + bean + " was already called. Possible cycle?");
@@ -72,6 +78,12 @@ public class LifeCycleManager {
         bean.startBean();
         beansBeingStarted.remove(bean);
         startedBeans.add(bean);
+    }
+
+    public <T extends LifeCycleBean> void waitUntilBeansStarted(List<T> beans) {
+        for (T bean : beans) {
+            waitUntilBeanStarted(bean);
+        }
     }
 
     public void waitUntilTerminated() {
@@ -98,4 +110,5 @@ public class LifeCycleManager {
             waitUntilBeanStopped(bean);
         }
     }
+
 }

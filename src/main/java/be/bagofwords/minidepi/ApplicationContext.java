@@ -40,8 +40,16 @@ public class ApplicationContext {
         lifeCycleManager.waitUntilBeanStopped(bean);
     }
 
+    public synchronized <T extends LifeCycleBean> void waitUntilBeansStopped(Class<T> beanClass, String... names) {
+        lifeCycleManager.waitUntilBeansStopped(beanManager.getBeans(beanClass, names));
+    }
+
     public synchronized void waitUntilBeanStarted(LifeCycleBean bean) {
         lifeCycleManager.waitUntilBeanStarted(bean);
+    }
+
+    public synchronized <T extends LifeCycleBean> void waitUntilBeanStarted(Class<T> beanClass, String... names) {
+        lifeCycleManager.waitUntilBeansStarted(beanManager.getBeans(beanClass, names));
     }
 
     public void waitUntilTerminated()  {
