@@ -43,20 +43,21 @@ public class PropertyManager {
     }
 
     public String getProperty(String name, String defaultValue) {
-        String value = properties.getProperty(name, null);
+        String value = properties.getProperty(name);
         if (value == null) {
-            if (defaultValue == null) {
-                throw new ApplicationContextException("The configuration option " + name + " was not found");
-            } else {
-                logger.warn("No configuration found for " + name + ", using default value " + defaultValue);
-                value = defaultValue;
-            }
+            logger.warn("No configuration found for " + name + ", using default value " + defaultValue);
+            return defaultValue;
+        } else {
+            return value;
         }
-        return value;
     }
 
     public String getProperty(String name) {
-        return getProperty(name, null);
+        String value = properties.getProperty(name);
+        if (value == null) {
+            throw new ApplicationContextException("The configuration option " + name + " was not found");
+        }
+        return value;
     }
 
 }
