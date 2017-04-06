@@ -42,7 +42,7 @@ public class LifeCycleManager {
             applicationWasTerminated = true;
             logger.info("Application has terminated. Bye!");
         } else {
-            logger.warn("Application termination requested while applications was already terminated");
+            logger.warn("Application termination requested while application was already terminated");
         }
     }
 
