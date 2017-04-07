@@ -20,20 +20,9 @@ public class BeanWithPropertyTest {
     public void testBeanWithPropertyDefaultValue() {
         ApplicationContext applicationContext = new ApplicationContext();
         BeanWithPropertiesFromApplicationContext bean1 = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
-        Assert.assertEquals("default_value", bean1.getProperty());
+        Assert.assertEquals("default_from_library", bean1.getProperty());
         BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
-        Assert.assertEquals("default_value", bean2.getProperty());
-    }
-
-    @Test
-    public void testBeanWithPropertyDefaultProperties() {
-        HashMap<String, String> config = new HashMap<>();
-        config.put("read-default-properties", "true");
-        ApplicationContext applicationContext = new ApplicationContext(config);
-        BeanWithPropertiesFromApplicationContext bean1 = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
-        Assert.assertEquals("value_from_default.properties", bean1.getProperty());
-        BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
-        Assert.assertEquals("value_from_default.properties", bean2.getProperty());
+        Assert.assertEquals("default_from_library", bean2.getProperty());
     }
 
     @Test

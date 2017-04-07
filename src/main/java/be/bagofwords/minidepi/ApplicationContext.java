@@ -84,8 +84,8 @@ public class ApplicationContext {
         return propertyManager.getProperty(name);
     }
 
-    public String getProperty(String name, String defaultValue) {
-        return propertyManager.getProperty(name, defaultValue);
+    public String getProperty(String name, String orFrom) {
+        return propertyManager.getProperty(name, orFrom);
     }
 
     public String getApplicationName() {

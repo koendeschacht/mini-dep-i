@@ -5,12 +5,12 @@
 
 package be.bagofwords.minidepi;
 
-public class PropertyNotFoundException extends ApplicationContextException {
-    public PropertyNotFoundException(String message) {
+public class PropertyException extends ApplicationContextException {
+    public PropertyException(String message) {
         super(message);
     }
 
-    public PropertyNotFoundException(String message, Throwable cause) {
+    public PropertyException(String message, Throwable cause) {
         super(message, cause);
     }
 }

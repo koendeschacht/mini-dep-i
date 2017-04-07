@@ -6,14 +6,13 @@
 package be.bagofwords.minidepi.testbeans;
 
 import be.bagofwords.minidepi.ApplicationContext;
-import be.bagofwords.minidepi.annotations.Inject;
 
 public class BeanWithPropertiesFromApplicationContext {
 
     private String property ;
 
     public BeanWithPropertiesFromApplicationContext(ApplicationContext applicationContext) {
-        property = applicationContext.getProperty("my_property", "default_value");
+        property = applicationContext.getProperty("my_property", "library.properties");
     }
 
     public String getProperty() {

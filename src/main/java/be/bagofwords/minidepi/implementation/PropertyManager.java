@@ -6,8 +6,7 @@
 package be.bagofwords.minidepi.implementation;
 
 import be.bagofwords.minidepi.ApplicationContext;
-import be.bagofwords.minidepi.ApplicationContextException;
-import be.bagofwords.minidepi.PropertyNotFoundException;
+import be.bagofwords.minidepi.PropertyException;
 import be.bagofwords.minidepi.properties.PropertyFilePropertyProvider;
 import be.bagofwords.minidepi.properties.PropertyProvider;
 import be.bagofwords.minidepi.properties.SocketPropertyProvider;
@@ -62,7 +61,7 @@ public class PropertyManager {
         if (!readPropertyResources.containsKey(propertyResource)) {
             InputStream defaultPropertiesInputStream = this.getClass().getResourceAsStream("/" + propertyResource);
             if (defaultPropertiesInputStream == null) {
-                throw new ApplicationContextException("Could not read resource /" + propertyResource);
+                throw new PropertyException("Could not read resource /" + propertyResource);
             } else {
                 try {
                     Properties properties = new Properties();
@@ -70,14 +69,14 @@ public class PropertyManager {
                     readPropertyResources.put(propertyResource, properties);
                     logger.info("Read properties from resource " + propertyResource);
                 } catch (IOException e) {
-                    throw new ApplicationContextException("Could not load properties from resource /" + propertyResource, e);
+                    throw new PropertyException("Could not load properties from resource /" + propertyResource, e);
                 }
             }
         }
         Properties properties = readPropertyResources.get(propertyResource);
         String value = properties.getProperty(name);
         if (value == null) {
-            throw new PropertyNotFoundException("The configuration option " + name + " was not found in default properties " + propertyResource);
+            throw new PropertyException("The configuration option " + name + " was not found in default properties " + propertyResource);
         }
         return value;
     }
@@ -85,7 +84,7 @@ public class PropertyManager {
     public String getProperty(String name) {
         String value = properties.getProperty(name);
         if (value == null) {
-            throw new PropertyNotFoundException("The configuration option " + name + " was not found");
+            throw new PropertyException("The configuration option " + name + " was not found");
         }
         return value;
     }

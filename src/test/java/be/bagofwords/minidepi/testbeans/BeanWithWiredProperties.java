@@ -9,7 +9,7 @@ import be.bagofwords.minidepi.annotations.Property;
 
 public class BeanWithWiredProperties {
 
-    @Property(value = "my_property", orFrom = "default_value")
+    @Property(value = "my_property", orFrom = "library.properties")
     private String property;
 
     public String getProperty() {

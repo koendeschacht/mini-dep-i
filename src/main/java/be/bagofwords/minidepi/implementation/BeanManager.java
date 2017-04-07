@@ -8,7 +8,7 @@ package be.bagofwords.minidepi.implementation;
 import be.bagofwords.minidepi.ApplicationContext;
 import be.bagofwords.minidepi.ApplicationContextException;
 import be.bagofwords.minidepi.LifeCycleBean;
-import be.bagofwords.minidepi.PropertyNotFoundException;
+import be.bagofwords.minidepi.PropertyException;
 import be.bagofwords.minidepi.annotations.Bean;
 import be.bagofwords.minidepi.annotations.Inject;
 import be.bagofwords.minidepi.annotations.Property;
@@ -245,7 +245,7 @@ public class BeanManager {
             } else {
                 value = applicationContext.getProperty(propertyName, propertyAnnotation.orFrom());
             }
-        } catch (PropertyNotFoundException exp) {
+        } catch (PropertyException exp) {
             throw new ApplicationContextException("Could not find property \"" + propertyName + "\" for bean " + bean, exp);
         }
         field.setAccessible(true);
