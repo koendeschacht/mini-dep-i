@@ -6,25 +6,32 @@
 package be.bagofwords.minidepi.implementation;
 
 import be.bagofwords.minidepi.ApplicationContext;
+import be.bagofwords.minidepi.ApplicationContextException;
 import be.bagofwords.minidepi.PropertyNotFoundException;
-import be.bagofwords.minidepi.properties.*;
+import be.bagofwords.minidepi.properties.PropertyFilePropertyProvider;
+import be.bagofwords.minidepi.properties.PropertyProvider;
+import be.bagofwords.minidepi.properties.SocketPropertyProvider;
+import be.bagofwords.minidepi.properties.SystemPropertiesPropertyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public class PropertyManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationContext.class);
     private Properties properties;
-    private List<PropertyProvider> propertyProviders = Arrays.asList(new DefaultPropertiesPropertyProvider(),
-            new PropertyFilePropertyProvider(), new SocketPropertyProvider(), new SystemPropertiesPropertyProvider());
+    private Map<String, Properties> readPropertyResources = new HashMap<>();
 
     public PropertyManager(Map<String, String> config) throws IOException {
         properties = new Properties();
         properties.putAll(config);
         Map<String, String> lastTriggers = new HashMap<>();
+        List<PropertyProvider> propertyProviders = Arrays.asList(new PropertyFilePropertyProvider(),
+                new SocketPropertyProvider(), new SystemPropertiesPropertyProvider());
+
         boolean finished = false;
         while (!finished) {
             finished = true;
@@ -42,14 +49,37 @@ public class PropertyManager {
         }
     }
 
-    public String getProperty(String name, String defaultValue) {
+    public String getProperty(String name, String orFrom) {
         String value = properties.getProperty(name);
         if (value == null) {
-            logger.warn("No configuration found for " + name + ", using default value " + defaultValue);
-            return defaultValue;
+            return getPropertyFromDefaults(orFrom, name);
         } else {
             return value;
         }
+    }
+
+    private synchronized String getPropertyFromDefaults(String propertyResource, String name) {
+        if (!readPropertyResources.containsKey(propertyResource)) {
+            InputStream defaultPropertiesInputStream = this.getClass().getResourceAsStream("/" + propertyResource);
+            if (defaultPropertiesInputStream == null) {
+                throw new ApplicationContextException("Could not read resource /" + propertyResource);
+            } else {
+                try {
+                    Properties properties = new Properties();
+                    properties.load(defaultPropertiesInputStream);
+                    readPropertyResources.put(propertyResource, properties);
+                    logger.info("Read properties from resource " + propertyResource);
+                } catch (IOException e) {
+                    throw new ApplicationContextException("Could not load properties from resource /" + propertyResource, e);
+                }
+            }
+        }
+        Properties properties = readPropertyResources.get(propertyResource);
+        String value = properties.getProperty(name);
+        if (value == null) {
+            throw new PropertyNotFoundException("The configuration option " + name + " was not found in default properties " + propertyResource);
+        }
+        return value;
     }
 
     public String getProperty(String name) {

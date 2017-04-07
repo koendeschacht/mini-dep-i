@@ -17,5 +17,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Property {
     String value() default "";
 
-    String defaultValue() default "";
+    String orFrom() default "";
 }

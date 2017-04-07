@@ -240,10 +240,10 @@ public class BeanManager {
         String propertyName = propertyAnnotation.value();
         String value;
         try {
-            if ("".equals(propertyAnnotation.defaultValue())) {
+            if ("".equals(propertyAnnotation.orFrom())) {
                 value = applicationContext.getProperty(propertyName);
             } else {
-                value = applicationContext.getProperty(propertyName, propertyAnnotation.defaultValue());
+                value = applicationContext.getProperty(propertyName, propertyAnnotation.orFrom());
             }
         } catch (PropertyNotFoundException exp) {
             throw new ApplicationContextException("Could not find property \"" + propertyName + "\" for bean " + bean, exp);
