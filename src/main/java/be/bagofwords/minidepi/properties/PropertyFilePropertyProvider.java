@@ -16,14 +16,14 @@ public class PropertyFilePropertyProvider implements PropertyProvider {
 
     @Override
     public String triggerProperty() {
-        return "property-file";
+        return "property.file";
     }
 
     @Override
     public void addProperties(Properties properties, Logger logger) throws IOException {
-        String path = properties.getProperty("property-file");
+        String path = properties.getProperty("property.file");
         if (path == null) {
-            throw new RuntimeException("No \"property-file\" property specified");
+            throw new RuntimeException("No \"property.file\" property specified");
         }
         File propertiesFile = new File(path);
         if (!propertiesFile.exists()) {

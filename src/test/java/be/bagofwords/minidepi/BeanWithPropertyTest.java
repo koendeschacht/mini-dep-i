@@ -38,13 +38,13 @@ public class BeanWithPropertyTest {
 
     @Test
     public void testBeanWithPropertyFromFile() {
-        System.setProperty("property-file", "src/test/resources/other.properties");
+        System.setProperty("property.file", "src/test/resources/other.properties");
         ApplicationContext applicationContext = new ApplicationContext();
         BeanWithPropertiesFromApplicationContext bean1 = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
         Assert.assertEquals("value_from_other.properties", bean1.getProperty());
         BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
         Assert.assertEquals("value_from_other.properties", bean2.getProperty());
-        System.clearProperty("property-file");
+        System.clearProperty("property.file");
     }
 
     @Test
