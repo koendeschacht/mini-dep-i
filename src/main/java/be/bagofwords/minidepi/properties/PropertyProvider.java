@@ -5,7 +5,6 @@
 
 package be.bagofwords.minidepi.properties;
 
-import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -14,6 +13,6 @@ public interface PropertyProvider {
 
     String triggerProperty();
 
-    void addProperties(Properties properties, Logger logger) throws IOException;
+    void addProperties(Properties properties) throws IOException;
 
 }

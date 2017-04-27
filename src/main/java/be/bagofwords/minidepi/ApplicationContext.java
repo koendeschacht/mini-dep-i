@@ -36,23 +36,27 @@ public class ApplicationContext {
         lifeCycleManager.terminateApplication();
     }
 
-    public synchronized void waitUntilBeanStopped(LifeCycleBean bean) {
-        lifeCycleManager.waitUntilBeanStopped(bean);
+    public void terminateAsync() {
+        new Thread("terminate-application-thread") {
+            public void run() {
+                terminate();
+            }
+        }.start();
     }
 
-    public synchronized <T extends LifeCycleBean> void waitUntilBeansStopped(Class<T> beanClass, String... names) {
-        lifeCycleManager.waitUntilBeansStopped(beanManager.getBeans(beanClass, names));
+    public boolean hasWiredFields(Object object) {
+        return beanManager.hasWiredFields(object);
     }
 
-    public synchronized void waitUntilBeanStarted(LifeCycleBean bean) {
-        lifeCycleManager.waitUntilBeanStarted(bean);
+    public boolean terminateWasRequested() {
+        return lifeCycleManager.terminateWasRequested();
     }
 
-    public synchronized <T extends LifeCycleBean> void waitUntilBeanStarted(Class<T> beanClass, String... names) {
-        lifeCycleManager.waitUntilBeansStarted(beanManager.getBeans(beanClass, names));
+    public synchronized void registerRuntimeDependency(Object bean, Object dependency) {
+        lifeCycleManager.registerRuntimeDependency(bean, dependency);
     }
 
-    public void waitUntilTerminated()  {
+    public void waitUntilTerminated() {
         lifeCycleManager.waitUntilTerminated();
     }
 

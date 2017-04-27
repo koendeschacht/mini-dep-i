@@ -5,15 +5,12 @@
 
 package be.bagofwords.minidepi;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import be.bagofwords.logging.Log;
 
 import java.util.Collections;
 import java.util.Map;
 
 public class ApplicationManager {
-
-    private static final Logger logger = LoggerFactory.getLogger(ApplicationManager.class);
 
     public static void run(Runnable main) {
         run(main, Collections.<String, String>emptyMap());
@@ -47,9 +44,11 @@ public class ApplicationManager {
             }
             main.run();
         } catch (Throwable exp) {
-            logger.error("Received unexpected exception, terminating application.", exp);
+            Log.e("Received unexpected exception, terminating application.", exp);
         } finally {
-            applicationContext.terminate();
+            if (!applicationContext.terminateWasRequested()) {
+                applicationContext.terminate();
+            }
         }
     }
 

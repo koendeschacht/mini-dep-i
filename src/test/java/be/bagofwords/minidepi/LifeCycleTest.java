@@ -44,24 +44,10 @@ public class LifeCycleTest {
     @Test
     public void testSlowBean() {
         final ApplicationContext applicationContext = new ApplicationContext();
-
         final SlowBean slowBean = new SlowBean();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                applicationContext.registerBean(slowBean);
-            }
-        }).start();
-        applicationContext.waitUntilBeanStarted(slowBean);
+        applicationContext.registerBean(slowBean);
         Assert.assertEquals(BeanState.STARTED, slowBean.beanState);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                applicationContext.terminate();
-            }
-        }).start();
-        applicationContext.waitUntilBeanStopped(slowBean);
+        applicationContext.terminate();
         Assert.assertEquals(BeanState.STOPPED, slowBean.beanState);
     }
 

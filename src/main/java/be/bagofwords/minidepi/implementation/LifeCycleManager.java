@@ -5,11 +5,11 @@
 
 package be.bagofwords.minidepi.implementation;
 
+import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.ApplicationContext;
 import be.bagofwords.minidepi.ApplicationContextException;
 import be.bagofwords.minidepi.LifeCycleBean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import be.bagofwords.util.MappedLists;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,12 +17,11 @@ import java.util.Set;
 
 public class LifeCycleManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(LifeCycleManager.class);
-
-    private final Set<LifeCycleBean> stoppedBeans = new HashSet<>();
+    private final Set<Object> stoppedBeans = new HashSet<>();
     private final Set<LifeCycleBean> beansBeingStopped = new HashSet<>();
     private final Set<LifeCycleBean> beansBeingStarted = new HashSet<>();
     private final Set<LifeCycleBean> startedBeans = new HashSet<>();
+    private final MappedLists<Object, Object> runTimeDependencies = new MappedLists<>();
     private final ApplicationContext applicationContext;
 
     private boolean applicationWasTerminated = false;
@@ -40,28 +39,33 @@ public class LifeCycleManager {
                 waitUntilBeanStopped(bean);
             }
             applicationWasTerminated = true;
-            logger.info("Application has terminated. Bye!");
+            Log.i("Application has terminated. Bye!");
         } else {
-            logger.warn("Application termination requested while application was already terminated");
+            Log.w("Application termination requested while application was already terminated");
         }
     }
 
-    public synchronized void waitUntilBeanStopped(LifeCycleBean bean) {
-        if (beansBeingStopped.contains(bean)) {
-            throw new ApplicationContextException("The stop() method of bean " + bean + " was already called. Possible cycle?");
+    public synchronized void waitUntilBeanStopped(Object bean) {
+        if (runTimeDependencies.containsKey(bean)) {
+            waitUntilBeansStopped(runTimeDependencies.get(bean));
         }
         if (stoppedBeans.contains(bean)) {
             return;
         }
-        beansBeingStopped.add(bean);
-        logger.info("Stopping bean " + bean);
-        bean.stopBean();
-        beansBeingStopped.remove(bean);
+        if (bean instanceof LifeCycleBean) {
+            if (beansBeingStopped.contains(bean)) {
+                throw new ApplicationContextException("The stop() method of bean " + bean + " was already called. Possible cycle?");
+            }
+            beansBeingStopped.add((LifeCycleBean) bean);
+            Log.i("Stopping bean " + bean);
+            ((LifeCycleBean) bean).stopBean();
+            beansBeingStopped.remove(bean);
+        }
         stoppedBeans.add(bean);
     }
 
-    public synchronized <T extends LifeCycleBean> void waitUntilBeansStopped(List<T> beans) {
-        for (LifeCycleBean bean : beans) {
+    public synchronized void waitUntilBeansStopped(List<? extends Object> beans) {
+        for (Object bean : beans) {
             waitUntilBeanStopped(bean);
         }
     }
@@ -74,7 +78,7 @@ public class LifeCycleManager {
             return;
         }
         beansBeingStarted.add(bean);
-        logger.info("Starting bean " + bean);
+        // Log.i("Starting bean " + bean);
         bean.startBean();
         beansBeingStarted.remove(bean);
         startedBeans.add(bean);
@@ -111,4 +115,17 @@ public class LifeCycleManager {
         }
     }
 
+    public boolean terminateWasRequested() {
+        return terminatedRequested;
+    }
+
+    public void registerRuntimeDependency(Object bean, Object dependencyBean) {
+        if (terminatedRequested) {
+            throw new RuntimeException("Terminate was already requested. Please call registerRuntimeDependency(..) on application startup");
+        }
+        if (runTimeDependencies.containsKey(bean) && runTimeDependencies.get(bean).contains(dependencyBean)) {
+            throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean);
+        }
+        runTimeDependencies.get(dependencyBean).add(bean);
+    }
 }

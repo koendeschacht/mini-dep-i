@@ -5,8 +5,8 @@
 
 package be.bagofwords.minidepi.properties;
 
+import be.bagofwords.logging.Log;
 import be.bagofwords.util.SocketConnection;
-import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -19,7 +19,7 @@ public class SocketPropertyProvider implements PropertyProvider {
     }
 
     @Override
-    public void addProperties(Properties properties, Logger logger) throws IOException {
+    public void addProperties(Properties properties) throws IOException {
         String host = properties.getProperty("socket.properties.host");
         int port = Integer.parseInt(properties.getProperty("socket.properties.port"));
         String applicationName = properties.getProperty("application.name");
@@ -34,6 +34,6 @@ public class SocketPropertyProvider implements PropertyProvider {
             properties.setProperty(socketConnection.readString(), socketConnection.readString());
         }
         socketConnection.close();
-        logger.info("Read properties from " + host + ":" + port);
+        Log.i("Read properties from " + host + ":" + port);
     }
 }

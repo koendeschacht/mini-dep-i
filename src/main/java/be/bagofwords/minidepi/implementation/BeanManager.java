@@ -5,6 +5,7 @@
 
 package be.bagofwords.minidepi.implementation;
 
+import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.ApplicationContext;
 import be.bagofwords.minidepi.ApplicationContextException;
 import be.bagofwords.minidepi.LifeCycleBean;
@@ -12,8 +13,6 @@ import be.bagofwords.minidepi.PropertyException;
 import be.bagofwords.minidepi.annotations.Bean;
 import be.bagofwords.minidepi.annotations.Inject;
 import be.bagofwords.minidepi.annotations.Property;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
@@ -22,8 +21,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 public class BeanManager {
-
-    private static final Logger logger = LoggerFactory.getLogger(BeanManager.class);
 
     private final ApplicationContext applicationContext;
     private final LifeCycleManager lifeCycleManager;
@@ -156,7 +153,7 @@ public class BeanManager {
         try {
             T newBean = constructBean(beanType);
             registerBean(newBean, extraNames);
-            logger.info("Created bean " + newBean);
+            Log.i("Created bean " + newBean);
             return newBean;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new ApplicationContextException("Failed to create bean " + beanType, e);
@@ -224,9 +221,12 @@ public class BeanManager {
     private void wireFields(Object bean, Class<?> beanClass) throws IllegalAccessException {
         Field[] fields = beanClass.getDeclaredFields();
         for (Field field : fields) {
-            Annotation[] annotations = field.getAnnotations();
-            if (hasInjectAnnotation(annotations)) {
-                injectDependentBean(bean, field);
+            Inject injectAnnotation = field.getAnnotation(Inject.class);
+            if (injectAnnotation != null) {
+                Object value = injectDependentBean(bean, field);
+                if (injectAnnotation.runtimeDependency()) {
+                    lifeCycleManager.registerRuntimeDependency(bean, value);
+                }
             } else {
                 Property propertyAnnotation = field.getAnnotation(Property.class);
                 if (propertyAnnotation != null) {
@@ -268,7 +268,7 @@ public class BeanManager {
         return editor.getValue();
     }
 
-    private void injectDependentBean(Object bean, Field field) throws IllegalAccessException {
+    private Object injectDependentBean(Object bean, Field field) throws IllegalAccessException {
         field.setAccessible(true);
         if (field.get(bean) == null) {
             Class<?> fieldType = field.getType();
@@ -291,6 +291,9 @@ public class BeanManager {
                 newValue = getBean(fieldType, qualifiers);
             }
             field.set(bean, newValue);
+            return newValue;
+        } else {
+            throw new RuntimeException("The field " + field.getName() + " of " + bean + " was not null!");
         }
     }
 
@@ -299,12 +302,22 @@ public class BeanManager {
             if (annotation.annotationType().equals(Inject.class)) {
                 return true;
             }
-            String name = annotation.annotationType().getCanonicalName();
-            if (name != null && name.equals("javax.inject.Inject")) {
-                return true;
-            }
         }
         return false;
     }
 
+    public boolean hasWiredFields(Object object) {
+        Class<?> currClass = object.getClass();
+        while (!currClass.equals(Object.class)) {
+            Field[] fields = object.getClass().getDeclaredFields();
+            for (Field field : fields) {
+                Inject injectAnnotation = field.getAnnotation(Inject.class);
+                if (injectAnnotation != null) {
+                    return true;
+                }
+            }
+            currClass = currClass.getSuperclass();
+        }
+        return false;
+    }
 }

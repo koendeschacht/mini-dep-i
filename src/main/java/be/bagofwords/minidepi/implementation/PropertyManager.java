@@ -5,14 +5,12 @@
 
 package be.bagofwords.minidepi.implementation;
 
-import be.bagofwords.minidepi.ApplicationContext;
+import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.PropertyException;
 import be.bagofwords.minidepi.properties.PropertyFilePropertyProvider;
 import be.bagofwords.minidepi.properties.PropertyProvider;
 import be.bagofwords.minidepi.properties.SocketPropertyProvider;
 import be.bagofwords.minidepi.properties.SystemPropertiesPropertyProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +18,6 @@ import java.util.*;
 
 public class PropertyManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(ApplicationContext.class);
     private Properties properties;
     private Map<String, Properties> readPropertyResources = new HashMap<>();
 
@@ -39,7 +36,7 @@ public class PropertyManager {
                 if (trigger == null || properties.getProperty(trigger) != null) {
                     String currValue = trigger == null ? "run-once" : properties.getProperty(trigger);
                     if (!lastTriggers.containsKey(trigger) || !Objects.equals(lastTriggers.get(trigger), currValue)) {
-                        propertyProvider.addProperties(properties, logger);
+                        propertyProvider.addProperties(properties);
                         lastTriggers.put(trigger, currValue);
                         finished = false;
                     }
@@ -67,7 +64,7 @@ public class PropertyManager {
                     Properties properties = new Properties();
                     properties.load(defaultPropertiesInputStream);
                     readPropertyResources.put(propertyResource, properties);
-                    logger.info("Read properties from resource " + propertyResource);
+                    Log.i("Read properties from resource " + propertyResource);
                 } catch (IOException e) {
                     throw new PropertyException("Could not load properties from resource /" + propertyResource, e);
                 }

@@ -5,7 +5,7 @@
 
 package be.bagofwords.minidepi.properties;
 
-import org.slf4j.Logger;
+import be.bagofwords.logging.Log;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -14,13 +14,13 @@ public class SystemPropertiesPropertyProvider implements PropertyProvider {
 
     @Override
     public String triggerProperty() {
-        return null; //Always trigger
+        return null; //Always triggered
     }
 
     @Override
-    public void addProperties(Properties properties, Logger logger) throws IOException {
+    public void addProperties(Properties properties) throws IOException {
         properties.putAll(System.getProperties());
-        logger.info("Read system properties");
+        Log.i("Read system properties");
     }
 
 }
