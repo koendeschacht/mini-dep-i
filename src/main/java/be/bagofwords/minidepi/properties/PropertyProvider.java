@@ -5,7 +5,6 @@
 
 package be.bagofwords.minidepi.properties;
 
-
 import java.io.IOException;
 import java.util.Properties;
 
