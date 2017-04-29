@@ -7,10 +7,7 @@ package be.bagofwords.minidepi.implementation;
 
 import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.PropertyException;
-import be.bagofwords.minidepi.properties.PropertyFilePropertyProvider;
-import be.bagofwords.minidepi.properties.PropertyProvider;
-import be.bagofwords.minidepi.properties.SocketPropertyProvider;
-import be.bagofwords.minidepi.properties.SystemPropertiesPropertyProvider;
+import be.bagofwords.minidepi.properties.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,12 +18,21 @@ public class PropertyManager {
     private Properties properties;
     private Map<String, Properties> readPropertyResources = new HashMap<>();
 
-    public PropertyManager(Map<String, String> config) throws IOException {
+    public PropertyManager(Properties properties) {
+        this.properties = properties;
+        init();
+    }
+
+    public PropertyManager(Map<String, String> config) {
         properties = new Properties();
         properties.putAll(config);
+        init();
+    }
+
+    public void init() {
         Map<String, String> lastTriggers = new HashMap<>();
         List<PropertyProvider> propertyProviders = Arrays.asList(new PropertyFilePropertyProvider(),
-                new SocketPropertyProvider(), new SystemPropertiesPropertyProvider());
+                new PropertyFilesPropertyProvider(), new SocketPropertyProvider(), new SystemPropertiesPropertyProvider());
 
         boolean finished = false;
         while (!finished) {
@@ -36,7 +42,11 @@ public class PropertyManager {
                 if (trigger == null || properties.getProperty(trigger) != null) {
                     String currValue = trigger == null ? "run-once" : properties.getProperty(trigger);
                     if (!lastTriggers.containsKey(trigger) || !Objects.equals(lastTriggers.get(trigger), currValue)) {
-                        propertyProvider.addProperties(properties);
+                        try {
+                            propertyProvider.addProperties(properties);
+                        } catch (IOException exp) {
+                            throw new RuntimeException("Failed to initialize properties. Error by " + propertyProvider, exp);
+                        }
                         lastTriggers.put(trigger, currValue);
                         finished = false;
                     }

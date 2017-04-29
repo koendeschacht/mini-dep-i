@@ -9,10 +9,10 @@ import be.bagofwords.minidepi.implementation.BeanManager;
 import be.bagofwords.minidepi.implementation.LifeCycleManager;
 import be.bagofwords.minidepi.implementation.PropertyManager;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class ApplicationContext {
 
@@ -25,11 +25,11 @@ public class ApplicationContext {
     }
 
     public ApplicationContext(Map<String, String> config) {
-        try {
-            propertyManager = new PropertyManager(config);
-        } catch (IOException exp) {
-            throw new ApplicationContextException("Failed to read properties", exp);
-        }
+        propertyManager = new PropertyManager(config);
+    }
+
+    public ApplicationContext(Properties properties) {
+        propertyManager = new PropertyManager(properties);
     }
 
     public void terminate() {
