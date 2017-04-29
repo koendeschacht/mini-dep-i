@@ -11,6 +11,7 @@ import be.bagofwords.minidepi.ApplicationContextException;
 import be.bagofwords.minidepi.LifeCycleBean;
 import be.bagofwords.util.MappedLists;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -123,9 +124,24 @@ public class LifeCycleManager {
         if (terminatedRequested) {
             throw new RuntimeException("Terminate was already requested. Please call registerRuntimeDependency(..) on application startup");
         }
-        if (runTimeDependencies.containsKey(bean) && runTimeDependencies.get(bean).contains(dependencyBean)) {
+        if (isDependent(bean, dependencyBean)) {
             throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean);
         }
         runTimeDependencies.get(dependencyBean).add(bean);
+    }
+
+    private boolean isDependent(Object bean, Object dependencyBean) {
+        List<Object> dependentBeans = new ArrayList<>();
+        dependentBeans.add(bean);
+        while (!dependentBeans.isEmpty()) {
+            Object currBean = dependentBeans.remove(0);
+            if (currBean == dependencyBean) {
+                return true;
+            }
+            if (runTimeDependencies.containsKey(currBean)) {
+                dependentBeans.addAll(runTimeDependencies.get(currBean));
+            }
+        }
+        return false;
     }
 }
