@@ -13,9 +13,8 @@ import be.bagofwords.minidepi.PropertyException;
 import be.bagofwords.minidepi.annotations.Bean;
 import be.bagofwords.minidepi.annotations.Inject;
 import be.bagofwords.minidepi.annotations.Property;
+import be.bagofwords.util.SerializationUtils;
 
-import java.beans.PropertyEditor;
-import java.beans.PropertyEditorManager;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
@@ -260,12 +259,7 @@ public class BeanManager {
     }
 
     private Object convertValue(Field field, String value, Object bean) {
-        PropertyEditor editor = PropertyEditorManager.findEditor(field.getType());
-        if (editor == null) {
-            throw new RuntimeException("Can not convert to type " + field.getType() + " in bean " + bean);
-        }
-        editor.setAsText(value);
-        return editor.getValue();
+        return SerializationUtils.deserializeObject(value, field.getType());
     }
 
     private Object injectDependentBean(Object bean, Field field) throws IllegalAccessException {
