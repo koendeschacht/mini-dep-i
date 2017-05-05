@@ -5,6 +5,7 @@
 
 package be.bagofwords.minidepi.events;
 
+import be.bagofwords.exec.ClassSourceReader;
 import be.bagofwords.exec.RemoteExecConfig;
 import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.annotations.Inject;
@@ -25,7 +26,11 @@ public class RemoteEventService {
     private final Map<EventListener, RemoteEventServiceThread> threads = new HashMap<>();
 
     public <T> void listenToEvents(String host, int port, Class<T> eventClass, EventFilter<T> filter, EventListener<T> localListener) {
-        RemoteEventServiceThread<T> thread = new RemoteEventServiceThread<>(host, port, eventClass, localListener, filter);
+        listenToEvents(host, port, eventClass, filter, localListener, null);
+    }
+
+    public <T> void listenToEvents(String host, int port, Class<T> eventClass, EventFilter<T> filter, EventListener<T> localListener, ClassSourceReader classSourceReader) {
+        RemoteEventServiceThread<T> thread = new RemoteEventServiceThread<>(host, port, eventClass, localListener, filter, classSourceReader);
         synchronized (threads) {
             threads.put(localListener, thread);
         }
@@ -39,7 +44,7 @@ public class RemoteEventService {
                 thread.wait(10 * 1000);
             }
             if (!thread.isListening) {
-                Log.w("Failed to listen for remove events. Possible connection problem?");
+                Log.w("Failed to listen for remote events. Possible connection problem?");
             }
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while waiting for thread " + thread + " to start", e);
@@ -59,24 +64,29 @@ public class RemoteEventService {
         private final Class<T> eventClass;
         private final EventListener<T> listener;
         private final EventFilter<T> filter;
+        private final ClassSourceReader classSourceReader;
 
         private int numOfConsecutiveFailures = 0;
         private SocketConnection socketConnection;
         public boolean isListening;
 
-        public RemoteEventServiceThread(String host, int port, Class<T> eventClass, EventListener<T> listener, EventFilter filter) {
+        public RemoteEventServiceThread(String host, int port, Class<T> eventClass, EventListener<T> listener, EventFilter<T> filter, ClassSourceReader classSourceReader) {
             super("remote-events-thread", true);
             this.host = host;
             this.port = port;
             this.eventClass = eventClass;
             this.listener = listener;
             this.filter = filter;
+            this.classSourceReader = classSourceReader;
         }
 
         @Override
         protected void runImpl() throws Exception {
             RemoteEventListener<T> remoteEventListener = new RemoteEventListener<>(eventClass, filter);
             RemoteExecConfig execConfig = RemoteExecConfig.create(remoteEventListener).add(filter.getClass());
+            if (classSourceReader != null) {
+                execConfig = execConfig.sourceReader(classSourceReader);
+            }
             while (!isTerminateRequested()) {
                 try {
                     socketConnection = remoteExecService.execRemotely(host, port, execConfig);
