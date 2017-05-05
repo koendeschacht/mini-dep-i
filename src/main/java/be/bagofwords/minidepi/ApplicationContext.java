@@ -93,6 +93,6 @@ public class ApplicationContext {
     }
 
     public String getApplicationName() {
-        return propertyManager.getProperty("application_name", "some_application");
+        return propertyManager.getProperty("application.name", "mini-dep-i.properties");
     }
 }

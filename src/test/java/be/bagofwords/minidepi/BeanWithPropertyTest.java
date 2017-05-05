@@ -64,7 +64,7 @@ public class BeanWithPropertyTest {
     @Test
     public void testGettingApplicationName() {
         Map<String, String> config = new HashMap<>();
-        config.put("application_name", "cool_app");
+        config.put("application.name", "cool_app");
         ApplicationContext context = new ApplicationContext(config);
         Assert.assertEquals("cool_app", context.getApplicationName());
     }
