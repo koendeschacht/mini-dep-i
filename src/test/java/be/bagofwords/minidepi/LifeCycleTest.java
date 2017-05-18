@@ -12,13 +12,53 @@ import be.bagofwords.minidepi.testbeans.SlowBean;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class LifeCycleTest {
 
     @Test
-    public void testLifeCycle() {
+    public void testLifeCycle_AutoStart() {
+        Map<String, String> config = new HashMap<>();
+        config.put("autostart.application", "true");
         ApplicationContext applicationContext = new ApplicationContext();
         Application application = applicationContext.getBean(Application.class);
         DatabaseService databaseService = applicationContext.getBean(DatabaseService.class);
+        Assert.assertEquals(BeanState.STARTED, application.beanState);
+        Assert.assertEquals(BeanState.STARTED, databaseService.beanState);
+        applicationContext.terminate();
+        Assert.assertEquals(BeanState.STOPPED, application.beanState);
+        Assert.assertEquals(BeanState.STOPPED, databaseService.beanState);
+    }
+
+    @Test
+    public void testLifeCycle_ReStart() {
+        ApplicationContext applicationContext = new ApplicationContext();
+        Application application = applicationContext.getBean(Application.class);
+        DatabaseService databaseService = applicationContext.getBean(DatabaseService.class);
+        Assert.assertEquals(BeanState.STARTED, application.beanState);
+        Assert.assertEquals(BeanState.STARTED, databaseService.beanState);
+        applicationContext.terminate();
+        Assert.assertEquals(BeanState.STOPPED, application.beanState);
+        Assert.assertEquals(BeanState.STOPPED, databaseService.beanState);
+        applicationContext.restart();
+        Assert.assertEquals(BeanState.STARTED, application.beanState);
+        Assert.assertEquals(BeanState.STARTED, databaseService.beanState);
+        applicationContext.terminate();
+        Assert.assertEquals(BeanState.STOPPED, application.beanState);
+        Assert.assertEquals(BeanState.STOPPED, databaseService.beanState);
+    }
+
+    @Test
+    public void testLifeCycle_NoAutoStart() {
+        Map<String, String> config = new HashMap<>();
+        config.put("autostart.application", "false");
+        ApplicationContext applicationContext = new ApplicationContext(config);
+        Application application = applicationContext.getBean(Application.class);
+        DatabaseService databaseService = applicationContext.getBean(DatabaseService.class);
+        Assert.assertEquals(BeanState.INITIALIZED, application.beanState);
+        Assert.assertEquals(BeanState.INITIALIZED, databaseService.beanState);
+        applicationContext.start();
         Assert.assertEquals(BeanState.STARTED, application.beanState);
         Assert.assertEquals(BeanState.STARTED, databaseService.beanState);
         applicationContext.terminate();

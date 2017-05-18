@@ -23,12 +23,6 @@ public class PropertyManager {
         init();
     }
 
-    public PropertyManager(Map<String, String> config) {
-        properties = new Properties();
-        properties.putAll(config);
-        init();
-    }
-
     public void init() {
         Map<String, String> lastTriggers = new HashMap<>();
         List<PropertyProvider> propertyProviders = Arrays.asList(new PropertyFilePropertyProvider(),
@@ -96,4 +90,9 @@ public class PropertyManager {
         return value;
     }
 
+    public static Properties propertiesFromConfig(Map<String, String> config) {
+        Properties properties = new Properties();
+        properties.putAll(config);
+        return properties;
+    }
 }

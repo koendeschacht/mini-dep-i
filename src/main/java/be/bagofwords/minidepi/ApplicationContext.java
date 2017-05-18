@@ -16,24 +16,37 @@ import java.util.Properties;
 
 public class ApplicationContext {
 
-    private final LifeCycleManager lifeCycleManager = new LifeCycleManager(this);
-    private final BeanManager beanManager = new BeanManager(this, lifeCycleManager);
     private final PropertyManager propertyManager;
+    private final LifeCycleManager lifeCycleManager;
+    private final BeanManager beanManager;
 
     public ApplicationContext() {
         this(Collections.<String, String>emptyMap());
     }
 
     public ApplicationContext(Map<String, String> config) {
-        propertyManager = new PropertyManager(config);
+        this(PropertyManager.propertiesFromConfig(config));
     }
 
     public ApplicationContext(Properties properties) {
         propertyManager = new PropertyManager(properties);
+        lifeCycleManager = new LifeCycleManager(this);
+        beanManager = new BeanManager(this, lifeCycleManager);
+        if (Boolean.parseBoolean(getProperty("autostart.application", "mini-dep-i.properties"))) {
+            lifeCycleManager.startApplication();
+        }
+    }
+
+    public void start() {
+        lifeCycleManager.startApplication();
     }
 
     public void terminate() {
         lifeCycleManager.terminateApplication();
+    }
+
+    public void restart() {
+        lifeCycleManager.restartApplication();
     }
 
     public void terminateAsync() {
@@ -95,4 +108,5 @@ public class ApplicationContext {
     public String getApplicationName() {
         return propertyManager.getProperty("application.name", "mini-dep-i.properties");
     }
+
 }

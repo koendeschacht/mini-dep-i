@@ -16,6 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static be.bagofwords.minidepi.implementation.ApplicationState.*;
+
 public class LifeCycleManager {
 
     private final Set<Object> stoppedBeans = new HashSet<>();
@@ -25,25 +27,46 @@ public class LifeCycleManager {
     private final MappedLists<Object, Object> runTimeDependencies = new MappedLists<>();
     private final ApplicationContext applicationContext;
 
-    private boolean applicationWasTerminated = false;
-    private boolean terminatedRequested = false;
+    private ApplicationState applicationState;
 
     public LifeCycleManager(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+        this.resetState();
+    }
+
+    private void resetState() {
+        applicationState = BEFORE_START;
+        startedBeans.clear();
+        stoppedBeans.clear();
+    }
+
+    public synchronized void startApplication() {
+        if (applicationState != BEFORE_START) {
+            throw new ApplicationContextException("Application can not be started because the current state is " + applicationState);
+        }
+        applicationState = STARTED;
+        List<? extends LifeCycleBean> lifeCycleBeans = applicationContext.getBeans(LifeCycleBean.class);
+        waitUntilBeansStarted(lifeCycleBeans);
     }
 
     public synchronized void terminateApplication() {
-        if (!applicationWasTerminated) {
-            terminatedRequested = true;
+        if (!terminateWasRequested()) {
+            applicationState = TERMINATE_REQUESTED;
             List<? extends LifeCycleBean> lifeCycleBeans = applicationContext.getBeans(LifeCycleBean.class);
-            for (LifeCycleBean bean : lifeCycleBeans) {
-                waitUntilBeanStopped(bean);
-            }
-            applicationWasTerminated = true;
+            waitUntilBeansStopped(lifeCycleBeans);
+            applicationState = TERMINATED;
             Log.i("Application has terminated. Bye!");
         } else {
             Log.w("Application termination requested while application was already terminated");
         }
+    }
+
+    public void restartApplication() {
+        if (applicationState == STARTED) {
+            terminateApplication();
+        }
+        resetState();
+        startApplication();
     }
 
     public synchronized void waitUntilBeanStopped(Object bean) {
@@ -72,6 +95,9 @@ public class LifeCycleManager {
     }
 
     public synchronized void waitUntilBeanStarted(LifeCycleBean bean) {
+        if (applicationState != STARTED) {
+            throw new ApplicationContextException("The application was not yet started");
+        }
         if (beansBeingStarted.contains(bean)) {
             throw new ApplicationContextException("The stop() method of bean " + bean + " was already called. Possible cycle?");
         }
@@ -92,11 +118,11 @@ public class LifeCycleManager {
     }
 
     public void waitUntilTerminated() {
-        while (!applicationWasTerminated) {
+        while (applicationState != TERMINATED) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                if (!terminatedRequested) {
+                if (applicationState != TERMINATE_REQUESTED) {
                     throw new RuntimeException("Received InterruptedException while no termination was requested");
                 }
             }
@@ -104,24 +130,23 @@ public class LifeCycleManager {
     }
 
     public boolean applicationWasTerminated() {
-        return applicationWasTerminated;
+        return applicationState == TERMINATED;
     }
 
     public void ensureBeanCorrectState(LifeCycleBean bean) {
-        if (!applicationWasTerminated()) {
+        if (applicationState == STARTED) {
             waitUntilBeanStarted(bean);
-        }
-        if (applicationWasTerminated()) {
+        } else if (terminateWasRequested()) {
             waitUntilBeanStopped(bean);
         }
     }
 
     public boolean terminateWasRequested() {
-        return terminatedRequested;
+        return applicationState == TERMINATE_REQUESTED || applicationState == TERMINATED;
     }
 
     public void registerRuntimeDependency(Object bean, Object dependencyBean) {
-        if (terminatedRequested) {
+        if (terminateWasRequested()) {
             throw new RuntimeException("Terminate was already requested. Please call registerRuntimeDependency(..) on application startup");
         }
         if (isDependent(bean, dependencyBean)) {
@@ -144,4 +169,5 @@ public class LifeCycleManager {
         }
         return false;
     }
+
 }
