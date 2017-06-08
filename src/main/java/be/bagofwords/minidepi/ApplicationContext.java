@@ -57,6 +57,10 @@ public class ApplicationContext {
         }.start();
     }
 
+    public boolean isStarted() {
+        return lifeCycleManager.applicationIsStarted();
+    }
+
     public boolean hasWiredFields(Object object) {
         return beanManager.hasWiredFields(object);
     }

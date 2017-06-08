@@ -129,8 +129,8 @@ public class LifeCycleManager {
         }
     }
 
-    public boolean applicationWasTerminated() {
-        return applicationState == TERMINATED;
+    public boolean applicationIsStarted() {
+        return applicationState == STARTED;
     }
 
     public void ensureBeanCorrectState(LifeCycleBean bean) {

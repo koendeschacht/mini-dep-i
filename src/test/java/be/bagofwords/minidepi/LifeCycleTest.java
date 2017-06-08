@@ -26,9 +26,11 @@ public class LifeCycleTest {
         DatabaseService databaseService = applicationContext.getBean(DatabaseService.class);
         Assert.assertEquals(BeanState.STARTED, application.beanState);
         Assert.assertEquals(BeanState.STARTED, databaseService.beanState);
+        Assert.assertTrue(applicationContext.isStarted());
         applicationContext.terminate();
         Assert.assertEquals(BeanState.STOPPED, application.beanState);
         Assert.assertEquals(BeanState.STOPPED, databaseService.beanState);
+        Assert.assertFalse(applicationContext.isStarted());
     }
 
     @Test
@@ -58,12 +60,15 @@ public class LifeCycleTest {
         DatabaseService databaseService = applicationContext.getBean(DatabaseService.class);
         Assert.assertEquals(BeanState.INITIALIZED, application.beanState);
         Assert.assertEquals(BeanState.INITIALIZED, databaseService.beanState);
+        Assert.assertFalse(applicationContext.isStarted());
         applicationContext.start();
         Assert.assertEquals(BeanState.STARTED, application.beanState);
         Assert.assertEquals(BeanState.STARTED, databaseService.beanState);
+        Assert.assertTrue(applicationContext.isStarted());
         applicationContext.terminate();
         Assert.assertEquals(BeanState.STOPPED, application.beanState);
         Assert.assertEquals(BeanState.STOPPED, databaseService.beanState);
+        Assert.assertFalse(applicationContext.isStarted());
     }
 
     @Test
