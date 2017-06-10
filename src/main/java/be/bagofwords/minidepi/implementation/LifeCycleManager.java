@@ -81,7 +81,7 @@ public class LifeCycleManager {
                 throw new ApplicationContextException("The stop() method of bean " + bean + " was already called. Possible cycle?");
             }
             beansBeingStopped.add((LifeCycleBean) bean);
-            Log.i("Stopping bean " + bean);
+            // Log.i("Stopping bean " + bean);
             ((LifeCycleBean) bean).stopBean();
             beansBeingStopped.remove(bean);
         }
