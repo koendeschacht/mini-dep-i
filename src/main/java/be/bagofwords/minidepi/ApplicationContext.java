@@ -109,8 +109,4 @@ public class ApplicationContext {
         return propertyManager.getProperty(name, orFrom);
     }
 
-    public String getApplicationName() {
-        return propertyManager.getProperty("application.name", "mini-dep-i.properties");
-    }
-
 }

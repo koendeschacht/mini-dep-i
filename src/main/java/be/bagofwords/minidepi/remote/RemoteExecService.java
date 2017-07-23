@@ -5,7 +5,7 @@
 
 package be.bagofwords.minidepi.remote;
 
-import be.bagofwords.exec.RemoteExecConfig;
+import be.bagofwords.exec.RemoteObjectConfig;
 import be.bagofwords.util.SocketConnection;
 import org.apache.commons.io.IOUtils;
 
@@ -15,16 +15,16 @@ public class RemoteExecService {
 
     public static final String SOCKET_NAME = "remote-exec";
 
-    public SocketConnection execRemotely(String host, int port, RemoteExecConfig remoteExecConfig) throws IOException {
+    public SocketConnection execRemotely(String host, int port, RemoteObjectConfig remoteObjectConfig) throws IOException {
         SocketConnection socketConnection = new SocketConnection(host, port, SOCKET_NAME);
-        socketConnection.writeValue(remoteExecConfig.pack());
+        socketConnection.writeValue(remoteObjectConfig.pack());
         boolean success = socketConnection.readBoolean();
         if (!success) {
             String error = socketConnection.readString();
             socketConnection.writeBoolean(true);
             IOUtils.closeQuietly(socketConnection);
             String remoteError = "\nREMOTE ERROR START:\n" + error + "\nREMOTE ERROR END\n";
-            throw new RuntimeException("Failed to execute remote class " + remoteExecConfig.getExecutorClassName() + remoteError);
+            throw new RuntimeException("Failed to execute remote class " + remoteObjectConfig.getObjectClassName() + remoteError);
         } else {
             socketConnection.writeBoolean(true);
         }

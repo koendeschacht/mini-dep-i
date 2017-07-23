@@ -101,9 +101,7 @@ public class BeanManager {
             return null;
         } else {
             String errorMessage = "Found " + beans.size() + " beans of type " + beanType;
-            if (names.length > 0) {
-                errorMessage += " and one of names " + Arrays.toString(names);
-            }
+            errorMessage = appendNames(errorMessage, names);
             throw new ApplicationContextException(errorMessage);
         }
     }
@@ -112,6 +110,10 @@ public class BeanManager {
         List<T> matchingBeans = getBeans(beanType, names);
         if (matchingBeans.size() == 1) {
             return matchingBeans.get(0);
+        } else if (matchingBeans.size() > 1) {
+            String errorMessage = "Found multiple matching beans for type " + beanType.getSimpleName();
+            errorMessage = appendNames(errorMessage, names);
+            throw new ApplicationContextException(errorMessage);
         } else {
             //Does this type have the correct qualifiers? If yes, we create it
             Set<String> qualifiers = getQualifiers(beanType);
@@ -126,12 +128,30 @@ public class BeanManager {
                     return matchingBeans.get(0);
                 }
             }
-            String errorMessage = "Could not find bean with type " + beanType;
-            if (names.length > 0) {
-                errorMessage += " and names " + Arrays.toString(names);
+            String errorMessage;
+            if (matchingBeans.size() > 0) {
+                errorMessage = "Found multiple beans with type " + beanType;
+                errorMessage = appendNames(errorMessage, names);
+                errorMessage += " : ";
+                for (int i = 0; i < matchingBeans.size(); i++) {
+                    errorMessage += matchingBeans.get(i).getClass().getSimpleName();
+                    if (i < matchingBeans.size() - 1) {
+                        errorMessage += ", ";
+                    }
+                }
+            } else {
+                errorMessage = "Could not find any bean with type " + beanType;
+                errorMessage = appendNames(errorMessage, names);
             }
             throw new ApplicationContextException(errorMessage);
         }
+    }
+
+    public String appendNames(String errorMessage, String[] names) {
+        if (names.length > 0) {
+            errorMessage += " and names " + Arrays.toString(names);
+        }
+        return errorMessage;
     }
 
     private <T> boolean canInstantiateBean(Class<T> beanType) {

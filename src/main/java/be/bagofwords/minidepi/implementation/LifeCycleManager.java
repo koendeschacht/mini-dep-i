@@ -26,6 +26,7 @@ public class LifeCycleManager {
     private final Set<LifeCycleBean> startedBeans = new HashSet<>();
     private final MappedLists<Object, Object> runTimeDependencies = new MappedLists<>();
     private final ApplicationContext applicationContext;
+    private final Object terminateLock = new Object();
 
     private ApplicationState applicationState;
 
@@ -55,6 +56,9 @@ public class LifeCycleManager {
             List<? extends LifeCycleBean> lifeCycleBeans = applicationContext.getBeans(LifeCycleBean.class);
             waitUntilBeansStopped(lifeCycleBeans);
             applicationState = TERMINATED;
+            synchronized (terminateLock) {
+                terminateLock.notifyAll();
+            }
             Log.i("Application has terminated. Bye!");
         } else {
             Log.w("Application termination requested while application was already terminated");
@@ -118,13 +122,13 @@ public class LifeCycleManager {
     }
 
     public void waitUntilTerminated() {
-        while (applicationState != TERMINATED) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                if (applicationState != TERMINATE_REQUESTED) {
-                    throw new RuntimeException("Received InterruptedException while no termination was requested");
-                }
+        try {
+            synchronized (terminateLock) {
+                terminateLock.wait();
+            }
+        } catch (InterruptedException e) {
+            if (applicationState != TERMINATE_REQUESTED) {
+                throw new RuntimeException("Received InterruptedException while no termination was requested");
             }
         }
     }

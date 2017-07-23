@@ -6,10 +6,11 @@
 package be.bagofwords.minidepi.events;
 
 import be.bagofwords.exec.ClassSourceReader;
-import be.bagofwords.exec.RemoteExecConfig;
+import be.bagofwords.exec.RemoteObjectConfig;
 import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.annotations.Inject;
 import be.bagofwords.minidepi.remote.RemoteExecService;
+import be.bagofwords.minidepi.services.TimeService;
 import be.bagofwords.util.SafeThread;
 import be.bagofwords.util.SocketConnection;
 import org.apache.commons.io.IOUtils;
@@ -22,6 +23,8 @@ public class RemoteEventService {
 
     @Inject
     private RemoteExecService remoteExecService;
+    @Inject
+    private TimeService timeService;
 
     private final Map<EventListener, RemoteEventServiceThread> threads = new HashMap<>();
 
@@ -83,13 +86,13 @@ public class RemoteEventService {
         @Override
         protected void runImpl() throws Exception {
             RemoteEventListener<T> remoteEventListener = new RemoteEventListener<>(eventClass, filter);
-            RemoteExecConfig execConfig = RemoteExecConfig.create(remoteEventListener).add(filter.getClass());
+            RemoteObjectConfig remoteConfig = RemoteObjectConfig.create(remoteEventListener).add(filter.getClass());
             if (classSourceReader != null) {
-                execConfig = execConfig.sourceReader(classSourceReader);
+                remoteConfig = remoteConfig.sourceReader(classSourceReader);
             }
             while (!isTerminateRequested()) {
                 try {
-                    socketConnection = remoteExecService.execRemotely(host, port, execConfig);
+                    socketConnection = remoteExecService.execRemotely(host, port, remoteConfig);
                     socketConnection.readBoolean();
                     synchronized (this) {
                         this.isListening = true;
@@ -106,7 +109,7 @@ public class RemoteEventService {
                     int secondsToWait = Math.min(10, numOfConsecutiveFailures);
                     Log.i("Error while receiving events from " + host + ":" + port + ". Will reconnect in " + secondsToWait + "s", exp);
                     try {
-                        Thread.sleep(secondsToWait * 1000);
+                        timeService.sleep(secondsToWait * 1000);
                     } catch (InterruptedException intExp) {
                         //OK
                     }
