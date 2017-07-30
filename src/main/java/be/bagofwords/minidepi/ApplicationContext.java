@@ -109,4 +109,7 @@ public class ApplicationContext {
         return propertyManager.getProperty(name, orFrom);
     }
 
+    public void setProperty(String name, String value) {
+        propertyManager.setProperty(name, value);
+    }
 }

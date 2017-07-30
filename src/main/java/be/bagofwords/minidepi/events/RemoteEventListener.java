@@ -5,14 +5,10 @@
 
 package be.bagofwords.minidepi.events;
 
+import be.bagofwords.exec.ExecDataStream;
 import be.bagofwords.exec.RemoteClass;
-import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.ApplicationContext;
 import be.bagofwords.minidepi.remote.RemoteApplicationExec;
-import be.bagofwords.util.SocketConnection;
-import org.apache.commons.io.IOUtils;
-
-import java.io.IOException;
 
 @RemoteClass
 public class RemoteEventListener<T> implements EventListener<T>, RemoteApplicationExec {
@@ -25,19 +21,16 @@ public class RemoteEventListener<T> implements EventListener<T>, RemoteApplicati
         this.filter = filter;
     }
 
-    private SocketConnection socketConnection;
+    private ExecDataStream valueWriter;
 
     @Override
-    public void exec(SocketConnection socketConn, ApplicationContext applicationContext) throws Exception {
+    public void exec(ExecDataStream dataStream, ApplicationContext applicationContext) throws Exception {
         EventService eventService = null;
         try {
-            socketConnection = socketConn;
+            this.valueWriter = dataStream;
             eventService = applicationContext.getBean(EventService.class);
             eventService.registerListener(eventClass, this);
-            synchronized (socketConnection) {
-                socketConnection.writeBoolean(true);
-            }
-            socketConnection.readBoolean(); //Boolean will be send by client when finished
+            this.valueWriter.readValue(Boolean.class);
         } catch (Exception exp) {
             eventService.removeListener(this);
         }
@@ -46,14 +39,8 @@ public class RemoteEventListener<T> implements EventListener<T>, RemoteApplicati
     @Override
     public void handleEvent(T event) {
         if (filter.accept(event)) {
-            synchronized (socketConnection) {
-                try {
-                    socketConnection.writeValue(event);
-                    socketConnection.flush();
-                } catch (IOException e) {
-                    Log.i("Failed to send event", e);
-                    IOUtils.closeQuietly(socketConnection);
-                }
+            synchronized (valueWriter) {
+                valueWriter.writeValue(event);
             }
         }
     }

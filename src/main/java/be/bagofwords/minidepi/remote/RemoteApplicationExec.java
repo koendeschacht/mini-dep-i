@@ -5,13 +5,13 @@
 
 package be.bagofwords.minidepi.remote;
 
+import be.bagofwords.exec.ExecDataStream;
 import be.bagofwords.minidepi.ApplicationContext;
-import be.bagofwords.util.SocketConnection;
 
 import java.io.Serializable;
 
 public interface RemoteApplicationExec extends Serializable {
 
-    void exec(SocketConnection socketConnection, ApplicationContext applicationContext) throws Exception;
+    void exec(ExecDataStream dataStream, ApplicationContext applicationContext) throws Exception;
 
 }

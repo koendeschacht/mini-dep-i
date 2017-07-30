@@ -5,30 +5,98 @@
 
 package be.bagofwords.minidepi.remote;
 
+import be.bagofwords.exec.RemoteExecAction;
+import be.bagofwords.exec.RemoteLogStatement;
 import be.bagofwords.exec.RemoteObjectConfig;
+import be.bagofwords.logging.Log;
+import be.bagofwords.minidepi.LifeCycleBean;
 import be.bagofwords.util.SocketConnection;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class RemoteExecService {
+public class RemoteExecService implements LifeCycleBean {
 
     public static final String SOCKET_NAME = "remote-exec";
+    private final List<SocketConnection> connections = new ArrayList<>();
 
-    public SocketConnection execRemotely(String host, int port, RemoteObjectConfig remoteObjectConfig) throws IOException {
-        SocketConnection socketConnection = new SocketConnection(host, port, SOCKET_NAME);
-        socketConnection.writeValue(remoteObjectConfig.pack());
-        boolean success = socketConnection.readBoolean();
-        if (!success) {
-            String error = socketConnection.readString();
-            socketConnection.writeBoolean(true);
-            IOUtils.closeQuietly(socketConnection);
-            String remoteError = "\nREMOTE ERROR START:\n" + error + "\nREMOTE ERROR END\n";
-            throw new RuntimeException("Failed to execute remote class " + remoteObjectConfig.getObjectClassName() + remoteError);
-        } else {
-            socketConnection.writeBoolean(true);
+    public void execRemotely(String host, int port, RemoteApplicationExec exec, Class... extraClasses) throws IOException {
+        RemoteObjectConfig config = RemoteObjectConfig.create(exec);
+        for (Class extraClass : extraClasses) {
+            config.add(extraClass);
         }
-        return socketConnection;
+        execRemotely(host, port, config);
     }
 
+    public void execRemotely(String host, int port, RemoteObjectConfig remoteObjectConfig) throws IOException {
+        execRemotely(host, port, remoteObjectConfig, new RemoteExecEventHandler() {
+            @Override
+            public void started(SocketConnection socketConnection) {
+                //Ok
+            }
+
+            @Override
+            public void finished() {
+                //Ok
+            }
+
+            @Override
+            public void handleValue(SocketConnection socketConnection) throws IOException {
+                throw new RuntimeException("No custom values expected");
+            }
+        });
+    }
+
+    public void execRemotely(String host, int port, RemoteObjectConfig remoteObjectConfig, RemoteExecEventHandler remoteExecEventHandler) throws IOException {
+        String logPrefix = "REMOTE " + remoteObjectConfig.getObjectClassName() + " ";
+        SocketConnection socketConnection = new SocketConnection(host, port, SOCKET_NAME);
+        synchronized (connections) {
+            connections.add(socketConnection);
+        }
+        try {
+            socketConnection.writeValue(remoteObjectConfig.pack());
+            boolean finished = false;
+            while (!finished) {
+                RemoteExecAction action = socketConnection.readValue(RemoteExecAction.class);
+                if (action == RemoteExecAction.IS_STARTED) {
+                    remoteExecEventHandler.started(socketConnection);
+                } else if (action == RemoteExecAction.IS_FINISHED) {
+                    remoteExecEventHandler.finished();
+                    finished = true;
+                } else if (action == RemoteExecAction.SEND_LOG) {
+                    RemoteLogStatement logStatement = socketConnection.readValue(RemoteLogStatement.class);
+                    synchronized (Log.LOCK) {
+                        Log.i(logStatement.level, logPrefix + logStatement.message);
+                        if (logStatement.stackTrace != null) {
+                            for (String stackTrace : logStatement.stackTrace) {
+                                Log.i(logStatement.level, logPrefix + stackTrace);
+                            }
+                        }
+                    }
+                } else if (action == RemoteExecAction.WRITE_VALUE) {
+                    remoteExecEventHandler.handleValue(socketConnection);
+                } else {
+                    throw new RuntimeException("Unexpected action " + action);
+                }
+            }
+        } finally {
+            IOUtils.closeQuietly(socketConnection);
+        }
+    }
+
+    @Override
+    public void startBean() {
+
+    }
+
+    @Override
+    public void stopBean() {
+        synchronized (connections) {
+            for (SocketConnection connection : connections) {
+                IOUtils.closeQuietly(connection);
+            }
+        }
+    }
 }

@@ -9,11 +9,11 @@ import be.bagofwords.exec.ClassSourceReader;
 import be.bagofwords.exec.RemoteObjectConfig;
 import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.annotations.Inject;
+import be.bagofwords.minidepi.remote.RemoteExecEventHandler;
 import be.bagofwords.minidepi.remote.RemoteExecService;
 import be.bagofwords.minidepi.services.TimeService;
 import be.bagofwords.util.SafeThread;
 import be.bagofwords.util.SocketConnection;
-import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -92,19 +92,29 @@ public class RemoteEventService {
             }
             while (!isTerminateRequested()) {
                 try {
-                    socketConnection = remoteExecService.execRemotely(host, port, remoteConfig);
-                    socketConnection.readBoolean();
-                    synchronized (this) {
-                        this.isListening = true;
-                        this.notifyAll(); //Necessary for waitUntilThreadIsActuallyListening(..) method
-                    }
-                    while (!isTerminateRequested()) {
-                        T event = socketConnection.readValue(eventClass);
-                        listener.handleEvent(event);
-                        numOfConsecutiveFailures = 0;
-                    }
+                    remoteExecService.execRemotely(host, port, remoteConfig, new RemoteExecEventHandler() {
+                        @Override
+                        public void started(SocketConnection socketConnection) {
+                            synchronized (RemoteEventServiceThread.this) {
+                                RemoteEventServiceThread.this.socketConnection = socketConnection;
+                                RemoteEventServiceThread.this.isListening = true;
+                                RemoteEventServiceThread.this.notifyAll(); //Necessary for waitUntilThreadIsActuallyListening(..) method
+                            }
+                        }
+
+                        @Override
+                        public void finished() {
+                            //Do nothing
+                        }
+
+                        @Override
+                        public void handleValue(SocketConnection socketConnection) throws IOException {
+                            T event = socketConnection.readValue(eventClass);
+                            listener.handleEvent(event);
+                            numOfConsecutiveFailures = 0;
+                        }
+                    });
                 } catch (IOException exp) {
-                    IOUtils.closeQuietly(socketConnection);
                     numOfConsecutiveFailures++;
                     int secondsToWait = Math.min(10, numOfConsecutiveFailures);
                     Log.i("Error while receiving events from " + host + ":" + port + ". Will reconnect in " + secondsToWait + "s", exp);
@@ -121,11 +131,11 @@ public class RemoteEventService {
         public void doTerminate() {
             if (socketConnection != null) {
                 try {
-                    socketConnection.writeBoolean(true);
+                    socketConnection.writeValue(Boolean.TRUE);
                 } catch (IOException e) {
                     //Ah well
                 }
-                IOUtils.closeQuietly(socketConnection);
+                org.apache.commons.io.IOUtils.closeQuietly(socketConnection);
             }
             synchronized (threads) {
                 threads.remove(listener);

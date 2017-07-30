@@ -95,4 +95,8 @@ public class PropertyManager {
         properties.putAll(config);
         return properties;
     }
+
+    public void setProperty(String name, String value) {
+        properties.put(name, value);
+    }
 }
