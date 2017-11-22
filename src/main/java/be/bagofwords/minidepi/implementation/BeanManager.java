@@ -210,7 +210,7 @@ public class BeanManager {
                 throw new ApplicationContextException("Could not create bean of type " + beanName + ". " + "Need at least one constructor that has either (1) no parameters, or (2) a single parameter of type ApplicationContext, or (3) the @Inject " +
                         "annotation");
             }
-        } catch (Exception exp) {
+        } catch (Throwable exp) {
             if (exp instanceof ApplicationContextException) {
                 throw exp;
             } else {
