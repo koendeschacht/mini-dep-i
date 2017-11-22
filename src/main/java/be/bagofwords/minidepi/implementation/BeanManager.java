@@ -182,31 +182,40 @@ public class BeanManager {
     }
 
     private <T> T constructBean(Class<T> beanClass) throws IllegalAccessException, InvocationTargetException, InstantiationException {
-        //Constructor with a single argument, the application context?
+        String beanName = beanClass.getCanonicalName();
         try {
-            return beanClass.getConstructor(ApplicationContext.class).newInstance(applicationContext);
-        } catch (NoSuchMethodException exp) {
-            //OK, continue
-        }
-        //Constructor with @Inject annotation?
-        for (Constructor<?> constructor : beanClass.getConstructors()) {
-            if (hasInjectAnnotation(constructor.getDeclaredAnnotations())) {
-                Class<?>[] parameterTypes = constructor.getParameterTypes();
-                Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
-                Object[] args = new Object[parameterTypes.length];
-                for (int i = 0; i < args.length; i++) {
-                    Set<String> qualifiers = getQualifiers(parameterAnnotations[i]);
-                    args[i] = getBean(parameterTypes[i], qualifiers.toArray(new String[qualifiers.size()]));
-                }
-                return (T) constructor.newInstance(args);
+            //Constructor with a single argument, the application context?
+            try {
+                return beanClass.getConstructor(ApplicationContext.class).newInstance(applicationContext);
+            } catch (NoSuchMethodException exp) {
+                //OK, continue
             }
-        }
-        //Constructor without any arguments?
-        try {
-            return beanClass.getConstructor().newInstance();
-        } catch (NoSuchMethodException e) {
-            throw new ApplicationContextException("Could not create bean of type " + beanClass.getCanonicalName() + ". " +
-                    "Need at least one constructor that has either (1) no parameters, or (2) a single parameter of type ApplicationContext, or (3) the @Inject annotation");
+            //Constructor with @Inject annotation?
+            for (Constructor<?> constructor : beanClass.getConstructors()) {
+                if (hasInjectAnnotation(constructor.getDeclaredAnnotations())) {
+                    Class<?>[] parameterTypes = constructor.getParameterTypes();
+                    Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
+                    Object[] args = new Object[parameterTypes.length];
+                    for (int i = 0; i < args.length; i++) {
+                        Set<String> qualifiers = getQualifiers(parameterAnnotations[i]);
+                        args[i] = getBean(parameterTypes[i], qualifiers.toArray(new String[qualifiers.size()]));
+                    }
+                    return (T) constructor.newInstance(args);
+                }
+            }
+            //Constructor without any arguments?
+            try {
+                return beanClass.getConstructor().newInstance();
+            } catch (NoSuchMethodException e) {
+                throw new ApplicationContextException("Could not create bean of type " + beanName + ". " + "Need at least one constructor that has either (1) no parameters, or (2) a single parameter of type ApplicationContext, or (3) the @Inject " +
+                        "annotation");
+            }
+        } catch (Exception exp) {
+            if (exp instanceof ApplicationContextException) {
+                throw exp;
+            } else {
+                throw new ApplicationContextException("Could not create bean of type " + beanName, exp);
+            }
         }
     }
 
