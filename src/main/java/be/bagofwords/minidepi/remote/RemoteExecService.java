@@ -50,7 +50,6 @@ public class RemoteExecService implements LifeCycleBean {
     }
 
     public void execRemotely(String host, int port, RemoteObjectConfig remoteObjectConfig, RemoteExecEventHandler remoteExecEventHandler) throws IOException {
-        String logPrefix = "REMOTE " + remoteObjectConfig.getObjectClassName() + " ";
         SocketConnection socketConnection = new SocketConnection(host, port, SOCKET_NAME);
         synchronized (connections) {
             connections.add(socketConnection);
@@ -68,10 +67,10 @@ public class RemoteExecService implements LifeCycleBean {
                 } else if (action == RemoteExecAction.SEND_LOG) {
                     RemoteLogStatement logStatement = socketConnection.readValue(RemoteLogStatement.class);
                     synchronized (Log.LOCK) {
-                        Log.i(logStatement.level, logPrefix + logStatement.message);
+                        Log.log(logStatement.level, "REMOTE " + logStatement.logger, logStatement.message, null);
                         if (logStatement.stackTrace != null) {
                             for (String stackTrace : logStatement.stackTrace) {
-                                Log.i(logStatement.level, logPrefix + stackTrace);
+                                Log.log(logStatement.level, "REMOTE " + logStatement.logger, stackTrace, null);
                             }
                         }
                     }

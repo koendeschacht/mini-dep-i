@@ -115,6 +115,7 @@ public class RemoteEventService {
                         }
                     });
                 } catch (IOException exp) {
+                    RemoteEventServiceThread.this.notifyAll(); //Necessary for waitUntilThreadIsActuallyListening(..) method
                     numOfConsecutiveFailures++;
                     int secondsToWait = Math.min(10, numOfConsecutiveFailures);
                     Log.i("Error while receiving events from " + host + ":" + port + ". Will reconnect in " + secondsToWait + "s", exp);

@@ -5,7 +5,6 @@
 
 package be.bagofwords.minidepi.remote;
 
-import be.bagofwords.exec.ExecDataStream;
 import be.bagofwords.minidepi.ApplicationContext;
 
 import java.io.Serializable;

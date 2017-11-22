@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class ApplicationContext {
+public class ApplicationContext implements AutoCloseable {
 
     private final PropertyManager propertyManager;
     private final LifeCycleManager lifeCycleManager;
@@ -111,5 +111,10 @@ public class ApplicationContext {
 
     public void setProperty(String name, String value) {
         propertyManager.setProperty(name, value);
+    }
+
+    @Override
+    public void close() {
+        terminate();
     }
 }
