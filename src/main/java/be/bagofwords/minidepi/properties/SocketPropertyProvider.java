@@ -23,11 +23,9 @@ public class SocketPropertyProvider implements PropertyProvider {
         String host = properties.getProperty("socket.properties.host");
         int port = Integer.parseInt(properties.getProperty("socket.properties.port"));
         String applicationName = properties.getProperty("application.name");
-        String applicationTag = properties.getProperty("application.tag");
         String environment = properties.getProperty("application.environment");
         SocketConnection socketConnection = new SocketConnection(host, port, "load-properties");
         socketConnection.writeString(applicationName);
-        socketConnection.writeString(applicationTag);
         socketConnection.writeString(environment);
         int numberOfProperties = socketConnection.readInt();
         for (int i = 0; i < numberOfProperties; i++) {
