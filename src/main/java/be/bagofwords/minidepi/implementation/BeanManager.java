@@ -252,8 +252,8 @@ public class BeanManager {
             Inject injectAnnotation = field.getAnnotation(Inject.class);
             if (injectAnnotation != null) {
                 Object value = injectDependentBean(bean, field);
-                if (injectAnnotation.runtimeDependency()) {
-                    lifeCycleManager.registerRuntimeDependency(bean, value);
+                if (injectAnnotation.ensureStarted()) {
+                    lifeCycleManager.registerStartBeforeDependency(bean, value);
                 }
             } else {
                 Property propertyAnnotation = field.getAnnotation(Property.class);

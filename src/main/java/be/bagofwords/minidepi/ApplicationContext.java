@@ -70,7 +70,7 @@ public class ApplicationContext implements AutoCloseable {
     }
 
     public synchronized void registerRuntimeDependency(Object bean, Object dependency) {
-        lifeCycleManager.registerRuntimeDependency(bean, dependency);
+        lifeCycleManager.registerStartBeforeDependency(bean, dependency);
     }
 
     public void waitUntilTerminated() {

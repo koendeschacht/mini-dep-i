@@ -17,5 +17,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Inject {
     String value() default "";
 
-    boolean runtimeDependency() default true;
+    boolean ensureStarted() default true;
 }

@@ -11,7 +11,7 @@ import org.junit.Assert;
 
 public class BeanStopAfter implements LifeCycleBean {
 
-    @Inject(runtimeDependency = false)
+    @Inject(ensureStarted = false)
     private BeanStopBefore beanStopBefore;
 
     public boolean stopped;

@@ -24,7 +24,7 @@ public class LifeCycleManager {
     private final Set<LifeCycleBean> beansBeingStopped = new HashSet<>();
     private final Set<LifeCycleBean> beansBeingStarted = new HashSet<>();
     private final Set<LifeCycleBean> startedBeans = new HashSet<>();
-    private final MappedLists<Object, Object> runTimeDependencies = new MappedLists<>();
+    private final MappedLists<Object, Object> startBeforeDependencies = new MappedLists<>();
     private final ApplicationContext applicationContext;
     private final Object terminateLock = new Object();
 
@@ -74,8 +74,8 @@ public class LifeCycleManager {
     }
 
     public synchronized void waitUntilBeanStopped(Object bean) {
-        if (runTimeDependencies.containsKey(bean)) {
-            waitUntilBeansStopped(runTimeDependencies.get(bean));
+        if (startBeforeDependencies.containsKey(bean)) {
+            waitUntilBeansStopped(startBeforeDependencies.get(bean));
         }
         if (stoppedBeans.contains(bean)) {
             return;
@@ -149,14 +149,14 @@ public class LifeCycleManager {
         return applicationState == TERMINATE_REQUESTED || applicationState == TERMINATED;
     }
 
-    public void registerRuntimeDependency(Object bean, Object dependencyBean) {
+    public void registerStartBeforeDependency(Object bean, Object dependencyBean) {
         if (terminateWasRequested()) {
-            throw new RuntimeException("Terminate was already requested. Please call registerRuntimeDependency(..) on application startup");
+            throw new RuntimeException("Terminate was already requested. Please call registerStartBeforeDependency(..) on application startup");
         }
         if (isDependent(bean, dependencyBean)) {
             throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean);
         }
-        runTimeDependencies.get(dependencyBean).add(bean);
+        startBeforeDependencies.get(dependencyBean).add(bean);
     }
 
     private boolean isDependent(Object bean, Object dependencyBean) {
@@ -167,8 +167,8 @@ public class LifeCycleManager {
             if (currBean == dependencyBean) {
                 return true;
             }
-            if (runTimeDependencies.containsKey(currBean)) {
-                dependentBeans.addAll(runTimeDependencies.get(currBean));
+            if (startBeforeDependencies.containsKey(currBean)) {
+                dependentBeans.addAll(startBeforeDependencies.get(currBean));
             }
         }
         return false;
