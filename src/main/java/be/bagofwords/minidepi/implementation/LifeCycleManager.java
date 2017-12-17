@@ -154,7 +154,7 @@ public class LifeCycleManager {
             throw new RuntimeException("Terminate was already requested. Please call registerStartBeforeDependency(..) on application startup");
         }
         if (isDependent(bean, dependencyBean)) {
-            throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean);
+            throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean+". Consider setting one of the inject annotations with ensureStarted=false");
         }
         startBeforeDependencies.get(dependencyBean).add(bean);
     }
