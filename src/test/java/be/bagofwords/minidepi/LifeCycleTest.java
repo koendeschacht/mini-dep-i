@@ -9,11 +9,21 @@ import be.bagofwords.minidepi.testbeans.Application;
 import be.bagofwords.minidepi.testbeans.BeanState;
 import be.bagofwords.minidepi.testbeans.DatabaseService;
 import be.bagofwords.minidepi.testbeans.SlowBean;
+import be.bagofwords.minidepi.testbeans.circulardeps.bad.BadBean1;
+import be.bagofwords.minidepi.testbeans.circulardeps.bad.BadBean2;
+import be.bagofwords.minidepi.testbeans.circulardeps.bad.BadBean3;
+import be.bagofwords.minidepi.testbeans.circulardeps.good.GoodBean1;
+import be.bagofwords.minidepi.testbeans.circulardeps.good.GoodBean2;
+import be.bagofwords.minidepi.testbeans.circulardeps.good.GoodBean3;
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class LifeCycleTest {
 
@@ -72,9 +82,9 @@ public class LifeCycleTest {
     }
 
     @Test
-    public void testLifeCycleAsync() throws InterruptedException {
+    public void testLifeCycleAsync() {
         final ApplicationContext applicationContext = new ApplicationContext();
-        final Application application = applicationContext.getBean(Application.class);
+        Application application = applicationContext.getBean(Application.class);
         Assert.assertEquals(BeanState.STARTED, application.beanState);
         new Thread(new Runnable() {
             @Override
@@ -88,12 +98,51 @@ public class LifeCycleTest {
 
     @Test
     public void testSlowBean() {
-        final ApplicationContext applicationContext = new ApplicationContext();
-        final SlowBean slowBean = new SlowBean();
+        ApplicationContext applicationContext = new ApplicationContext();
+        SlowBean slowBean = new SlowBean();
         applicationContext.registerBean(slowBean);
         Assert.assertEquals(BeanState.STARTED, slowBean.beanState);
         applicationContext.terminate();
         Assert.assertEquals(BeanState.STOPPED, slowBean.beanState);
+    }
+
+    @Test
+    public void testTestCyclicDependencies_cyclic_dependencies_between_lifecycle_beans() {
+        assertThatThrownBy(new ThrowableAssert.ThrowingCallable() {
+            @Override
+            public void call() {
+                new ApplicationContext().registerBean(new BadBean3());
+            }
+        }).hasMessage("Cyclic dependency detected between beans bean3 and bean1. Consider setting one of the inject annotations with ensureStarted=false");
+
+        assertThatThrownBy(new ThrowableAssert.ThrowingCallable() {
+            @Override
+            public void call() {
+                new ApplicationContext().registerBean(new BadBean1());
+            }
+        }).hasMessage("Cyclic dependency detected between beans bean1 and bean2. Consider setting one of the inject annotations with ensureStarted=false");
+
+        assertThatThrownBy(new ThrowableAssert.ThrowingCallable() {
+            @Override
+            public void call() {
+                new ApplicationContext().registerBean(new BadBean2());
+            }
+        }).hasMessage("Cyclic dependency detected between beans bean2 and bean3. Consider setting one of the inject annotations with ensureStarted=false");
+    }
+
+    @Test
+    public void testTestCyclicDependencies_cyclic_dependencies_between_non_lifecycle_beans() {
+        ApplicationContext applicationContext1 = new ApplicationContext();
+        applicationContext1.registerBean(new GoodBean1());
+        assertThat(applicationContext1.getBean(GoodBean3.class).wasStarted).isTrue();
+
+        ApplicationContext applicationContext2 = new ApplicationContext();
+        applicationContext2.registerBean(new GoodBean2());
+        assertThat(applicationContext2.getBean(GoodBean3.class).wasStarted).isTrue();
+
+        ApplicationContext applicationContext3 = new ApplicationContext();
+        applicationContext3.registerBean(new GoodBean3());
+        assertThat(applicationContext3.getBean(GoodBean3.class).wasStarted).isTrue();
     }
 
 }

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import static be.bagofwords.minidepi.implementation.ApplicationState.*;
+import static java.util.Collections.singletonList;
 
 public class LifeCycleManager {
 
@@ -154,24 +155,50 @@ public class LifeCycleManager {
             throw new RuntimeException("Terminate was already requested. Please call registerStartBeforeDependency(..) on application startup");
         }
         if (isDependent(bean, dependencyBean)) {
-            throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean+". Consider setting one of the inject annotations with ensureStarted=false");
+            throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean + ". Consider setting one of the inject annotations with ensureStarted=false");
         }
         startBeforeDependencies.get(dependencyBean).add(bean);
     }
 
     private boolean isDependent(Object bean, Object dependencyBean) {
-        List<Object> dependentBeans = new ArrayList<>();
-        dependentBeans.add(bean);
-        while (!dependentBeans.isEmpty()) {
-            Object currBean = dependentBeans.remove(0);
-            if (currBean == dependencyBean) {
-                return true;
+        List<List<Object>> dependencyChains = new ArrayList<>();
+        dependencyChains.add(singletonList(bean));
+        List<List<Object>> circularDependencyChains = new ArrayList<>();
+        while (!dependencyChains.isEmpty()) {
+            List<Object> dependencyChain = dependencyChains.remove(dependencyChains.size() - 1);
+            Object lastBean = dependencyChain.get(dependencyChain.size() - 1);
+            List<Object> dependencies = startBeforeDependencies.get(lastBean);
+            for (Object dependency : dependencies) {
+                boolean isCircular = dependencyChain.contains(dependency) || dependency == dependencyBean;
+                List<Object> newDependencyChain = new ArrayList<>(dependencyChain);
+                newDependencyChain.add(dependency);
+                if (isCircular) {
+                    circularDependencyChains.add(newDependencyChain);
+                } else {
+                    dependencyChains.add(newDependencyChain);
+                }
             }
-            if (startBeforeDependencies.containsKey(currBean)) {
-                dependentBeans.addAll(startBeforeDependencies.get(currBean));
+        }
+        return hasChainWithMultipleLifeCycleBeans(circularDependencyChains);
+    }
+
+    private boolean hasChainWithMultipleLifeCycleBeans(List<List<Object>> dependencyChains) {
+        for (List<Object> dependencyChain : dependencyChains) {
+            if (hasMultipleLifeCycleBeans(dependencyChain)) {
+                return true;
             }
         }
         return false;
+    }
+
+    private boolean hasMultipleLifeCycleBeans(List<Object> circularDependencyChain) {
+        int numOfLifecycleBeans = 0;
+        for (Object o : circularDependencyChain) {
+            if (o instanceof LifeCycleBean) {
+                numOfLifecycleBeans++;
+            }
+        }
+        return numOfLifecycleBeans > 1;
     }
 
 }
