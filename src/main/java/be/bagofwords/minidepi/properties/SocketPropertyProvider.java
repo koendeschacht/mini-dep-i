@@ -30,6 +30,6 @@ public class SocketPropertyProvider implements PropertyProvider {
             properties.setProperty(socketConnection.readString(), socketConnection.readString());
         }
         socketConnection.close();
-        Log.i("Read properties from " + host + ":" + port);
+        Log.i("Read properties from " + host + ":" + port + " for application " + applicationName);
     }
 }
