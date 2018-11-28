@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static be.bagofwords.minidepi.properties.PropertyUtils.mapToProperties;
+
 public class ApplicationContext implements AutoCloseable {
 
     private final PropertyManager propertyManager;
@@ -25,7 +27,7 @@ public class ApplicationContext implements AutoCloseable {
     }
 
     public ApplicationContext(Map<String, String> config) {
-        this(PropertyManager.propertiesFromConfig(config));
+        this(mapToProperties(config));
     }
 
     public ApplicationContext(Properties properties) {

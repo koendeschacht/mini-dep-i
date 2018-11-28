@@ -7,6 +7,7 @@ package be.bagofwords.minidepi;
 
 import be.bagofwords.minidepi.testbeans.BeanWithIntegerProperty;
 import be.bagofwords.minidepi.testbeans.BeanWithPropertiesFromApplicationContext;
+import be.bagofwords.minidepi.testbeans.BeanWithTwoProperties;
 import be.bagofwords.minidepi.testbeans.BeanWithWiredProperties;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,6 +45,26 @@ public class BeanWithPropertyTest {
         Assert.assertEquals("value_from_other.properties", bean1.getProperty());
         BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
         Assert.assertEquals("value_from_other.properties", bean2.getProperty());
+        System.clearProperty("property.file");
+    }
+
+    @Test
+    public void testBeanWithTransitiveProperties() {
+        System.setProperty("property.file", "src/test/resources/file_with_transitive_properties.properties");
+        ApplicationContext applicationContext = new ApplicationContext();
+        BeanWithTwoProperties bean2 = applicationContext.getBean(BeanWithTwoProperties.class);
+        Assert.assertEquals("value_from_other.properties", bean2.getProperty1());
+        Assert.assertEquals("value_for_other_property", bean2.getProperty2());
+        System.clearProperty("property.file");
+    }
+
+    @Test
+    public void testBeanWithPropertiesFromMultipleFiles() {
+        System.setProperty("property.files", "src/test/resources/other.properties, src/test/resources/yet_other.properties");
+        ApplicationContext applicationContext = new ApplicationContext();
+        BeanWithTwoProperties bean2 = applicationContext.getBean(BeanWithTwoProperties.class);
+        Assert.assertEquals("value_from_other.properties", bean2.getProperty1());
+        Assert.assertEquals("value_for_other_property", bean2.getProperty2());
         System.clearProperty("property.file");
     }
 

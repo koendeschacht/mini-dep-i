@@ -15,7 +15,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({CONSTRUCTOR, FIELD})
 @Retention(RUNTIME)
 public @interface Property {
-    String value() default "";
+    String value();
 
     String orFrom() default "";
 }

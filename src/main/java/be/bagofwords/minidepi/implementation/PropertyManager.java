@@ -7,8 +7,9 @@ package be.bagofwords.minidepi.implementation;
 
 import be.bagofwords.logging.Log;
 import be.bagofwords.minidepi.PropertyException;
-import be.bagofwords.minidepi.properties.*;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -17,6 +18,8 @@ public class PropertyManager {
 
     private Properties properties;
     private Map<String, Properties> readPropertyResources = new HashMap<>();
+    private List<File> readPropertyFiles = new ArrayList<>();
+    private UserInputManager userInputManager = new UserInputManager();
 
     public PropertyManager(Properties properties) {
         this.properties = properties;
@@ -24,41 +27,76 @@ public class PropertyManager {
     }
 
     public void init() {
-        Map<String, String> lastTriggers = new HashMap<>();
-        List<PropertyProvider> propertyProviders = Arrays.asList(new PropertyFilePropertyProvider(),
-                new PropertyFilesPropertyProvider(), new SocketPropertyProvider(), new SystemPropertiesPropertyProvider());
+        properties.putAll(System.getProperties());
+        readAllPropertiesFromPropertyFiles();
+    }
 
+    public void readAllPropertiesFromPropertyFiles() {
+        //Keep reading from property files until no new file found
+        String lastPropertyFile = null;
+        String lastPropertyFiles = null;
         boolean finished = false;
         while (!finished) {
             finished = true;
-            for (PropertyProvider propertyProvider : propertyProviders) {
-                String trigger = propertyProvider.triggerProperty();
-                if (trigger == null || properties.getProperty(trigger) != null) {
-                    String currValue = trigger == null ? "run-once" : properties.getProperty(trigger);
-                    if (!lastTriggers.containsKey(trigger) || !Objects.equals(lastTriggers.get(trigger), currValue)) {
-                        try {
-                            propertyProvider.addProperties(properties);
-                        } catch (IOException exp) {
-                            throw new RuntimeException("Failed to initialize properties. Error by " + propertyProvider, exp);
-                        }
-                        lastTriggers.put(trigger, currValue);
-                        finished = false;
-                    }
+            String propertyFile = properties.getProperty("property.file");
+            if (propertyFile != null && !propertyFile.equals(lastPropertyFile)) {
+                readPropertiesFromFile(properties, propertyFile);
+                lastPropertyFile = propertyFile;
+                finished = false;
+            }
+            String propertyFiles = properties.getProperty("property.files");
+            if (propertyFiles != null && !propertyFiles.equals(lastPropertyFiles)) {
+                String[] propertyFilesArr = propertyFiles.split(",");
+                for (String file : propertyFilesArr) {
+                    readPropertiesFromFile(properties, file);
                 }
+                lastPropertyFiles = propertyFiles;
+                finished = false;
             }
         }
     }
 
+    public void readPropertiesFromFile(Properties properties, String path) {
+        path = path.trim();
+        File propertiesFile = new File(path);
+        if (!propertiesFile.exists()) {
+            throw new RuntimeException("Could not find file " + propertiesFile.getAbsolutePath());
+        }
+        try {
+            properties.load(new FileInputStream(propertiesFile));
+            readPropertyFiles.add(propertiesFile);
+        } catch (IOException e) {
+            throw new PropertyException("Failed to read properties from file " + propertiesFile.getAbsolutePath(), e);
+        }
+        Log.i("Read properties from " + path);
+    }
+
+
     public String getProperty(String name, String orFrom) {
         String value = properties.getProperty(name);
         if (value == null) {
-            return getPropertyFromDefaults(orFrom, name);
+            return readPropertyFromFallbackResource(name, orFrom); //Should always return a value, since a fallback file was specified
         } else {
             return value;
         }
     }
 
-    private synchronized String getPropertyFromDefaults(String propertyResource, String name) {
+    public String getProperty(String name) {
+        String value = properties.getProperty(name);
+        if (value == null) {
+            value = userInputManager.getPropertyFromUserInputIfPossible(name, readPropertyFiles);
+        }
+        if (value == null) {
+            throw new PropertyException("The property " + name + " was not found");
+        }
+        return value;
+    }
+
+    public void setProperty(String name, String value) {
+        properties.put(name, value);
+    }
+
+    private synchronized String readPropertyFromFallbackResource(String name, String propertyResource) {
         if (!readPropertyResources.containsKey(propertyResource)) {
             InputStream defaultPropertiesInputStream = this.getClass().getResourceAsStream("/" + propertyResource);
             if (defaultPropertiesInputStream == null) {
@@ -77,26 +115,9 @@ public class PropertyManager {
         Properties properties = readPropertyResources.get(propertyResource);
         String value = properties.getProperty(name);
         if (value == null) {
+            //Should not happen normally, since the developer of the specific library specified the propertyResource
             throw new PropertyException("The configuration option " + name + " was not found in default properties " + propertyResource);
         }
         return value;
-    }
-
-    public String getProperty(String name) {
-        String value = properties.getProperty(name);
-        if (value == null) {
-            throw new PropertyException("The configuration option " + name + " was not found");
-        }
-        return value;
-    }
-
-    public static Properties propertiesFromConfig(Map<String, String> config) {
-        Properties properties = new Properties();
-        properties.putAll(config);
-        return properties;
-    }
-
-    public void setProperty(String name, String value) {
-        properties.put(name, value);
     }
 }
