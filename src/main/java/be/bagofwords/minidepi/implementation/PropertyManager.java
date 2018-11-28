@@ -19,7 +19,6 @@ public class PropertyManager {
     private Properties properties;
     private Map<String, Properties> readPropertyResources = new HashMap<>();
     private List<File> readPropertyFiles = new ArrayList<>();
-    private UserInputManager userInputManager = new UserInputManager();
 
     public PropertyManager(Properties properties) {
         this.properties = properties;
@@ -84,12 +83,25 @@ public class PropertyManager {
     public String getProperty(String name) {
         String value = properties.getProperty(name);
         if (value == null) {
-            value = userInputManager.getPropertyFromUserInputIfPossible(name, readPropertyFiles);
-        }
-        if (value == null) {
-            throw new PropertyException("The property " + name + " was not found");
+            printInformationOnPropertyFiles(name);
+            throw new PropertyException("The property " + name + " was not found. See the logs on how to resolve this");
         }
         return value;
+    }
+
+    public void printInformationOnPropertyFiles(String propertyName) {
+        Log.e("Property \"" + propertyName + "\" was not found! This will terminate your application.");
+        if (readPropertyFiles.isEmpty()) {
+            Log.e("You can provide a property file by passing setting a system property, i.e. -Dproperty.file=/path/to/my_properties.properties");
+        } else if (readPropertyFiles.size() == 1) {
+            Log.e("You might want to add the property to the file " + readPropertyFiles.get(0).getAbsolutePath() + " to avoid this error on the next run");
+        } else {
+            readPropertyFiles.size();
+            Log.e("You might want to add the property any of the following files to avoid this error on the next run");
+            for (File file : readPropertyFiles) {
+                Log.e("\t" + file.getAbsolutePath());
+            }
+        }
     }
 
     public void setProperty(String name, String value) {
