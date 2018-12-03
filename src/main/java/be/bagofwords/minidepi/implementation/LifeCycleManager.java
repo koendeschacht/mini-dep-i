@@ -75,13 +75,13 @@ public class LifeCycleManager {
     }
 
     public synchronized void waitUntilBeanStopped(Object bean) {
-        if (startBeforeDependencies.containsKey(bean)) {
-            waitUntilBeansStopped(startBeforeDependencies.get(bean));
-        }
         if (stoppedBeans.contains(bean)) {
             return;
         }
         if (bean instanceof LifeCycleBean) {
+            if (startBeforeDependencies.containsKey(bean)) {
+                waitUntilBeansStopped(startBeforeDependencies.get(bean));
+            }
             if (beansBeingStopped.contains(bean)) {
                 throw new ApplicationContextException("The stop() method of bean " + bean + " was already called. Possible cycle?");
             }

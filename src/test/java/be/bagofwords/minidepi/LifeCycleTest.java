@@ -134,15 +134,21 @@ public class LifeCycleTest {
     public void testTestCyclicDependencies_cyclic_dependencies_between_non_lifecycle_beans() {
         ApplicationContext applicationContext1 = new ApplicationContext();
         applicationContext1.registerBean(new GoodBean1());
-        assertThat(applicationContext1.getBean(GoodBean3.class).wasStarted).isTrue();
+        assertThatApplicationContextWasStartedAndCanBeStopped(applicationContext1);
 
         ApplicationContext applicationContext2 = new ApplicationContext();
         applicationContext2.registerBean(new GoodBean2());
-        assertThat(applicationContext2.getBean(GoodBean3.class).wasStarted).isTrue();
+        assertThatApplicationContextWasStartedAndCanBeStopped(applicationContext2);
 
         ApplicationContext applicationContext3 = new ApplicationContext();
         applicationContext3.registerBean(new GoodBean3());
-        assertThat(applicationContext3.getBean(GoodBean3.class).wasStarted).isTrue();
+        assertThatApplicationContextWasStartedAndCanBeStopped(applicationContext3);
+
+    }
+
+    public void assertThatApplicationContextWasStartedAndCanBeStopped(ApplicationContext applicationContext) {
+        assertThat(applicationContext.getBean(GoodBean3.class).wasStarted).isTrue();
+        applicationContext.terminate();
     }
 
 }
