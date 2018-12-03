@@ -59,13 +59,22 @@ public class BeanWithPropertyTest {
     }
 
     @Test
+    public void testBeanWithOverwrittenTransitiveProperties() {
+        System.setProperty("property.files", "src/test/resources/overwritten.properties, src/test/resources/not_overwritten.properties");
+        ApplicationContext applicationContext = new ApplicationContext();
+        BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
+        Assert.assertEquals("my_value", bean2.getProperty());
+        System.clearProperty("property.files");
+    }
+
+    @Test
     public void testBeanWithPropertiesFromMultipleFiles() {
         System.setProperty("property.files", "src/test/resources/other.properties, src/test/resources/yet_other.properties");
         ApplicationContext applicationContext = new ApplicationContext();
         BeanWithTwoProperties bean2 = applicationContext.getBean(BeanWithTwoProperties.class);
         Assert.assertEquals("value_from_other.properties", bean2.getProperty1());
         Assert.assertEquals("value_for_other_property", bean2.getProperty2());
-        System.clearProperty("property.file");
+        System.clearProperty("property.files");
     }
 
     @Test

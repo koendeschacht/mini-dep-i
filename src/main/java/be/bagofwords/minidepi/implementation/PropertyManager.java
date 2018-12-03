@@ -27,30 +27,19 @@ public class PropertyManager {
 
     public void init() {
         properties.putAll(System.getProperties());
-        readAllPropertiesFromPropertyFiles();
+        readPropertiesFromPropertyFiles(properties);
     }
 
-    public void readAllPropertiesFromPropertyFiles() {
-        //Keep reading from property files until no new file found
-        String lastPropertyFile = null;
-        String lastPropertyFiles = null;
-        boolean finished = false;
-        while (!finished) {
-            finished = true;
-            String propertyFile = properties.getProperty("property.file");
-            if (propertyFile != null && !propertyFile.equals(lastPropertyFile)) {
-                readPropertiesFromFile(properties, propertyFile);
-                lastPropertyFile = propertyFile;
-                finished = false;
-            }
-            String propertyFiles = properties.getProperty("property.files");
-            if (propertyFiles != null && !propertyFiles.equals(lastPropertyFiles)) {
-                String[] propertyFilesArr = propertyFiles.split(",");
-                for (String file : propertyFilesArr) {
-                    readPropertiesFromFile(properties, file);
-                }
-                lastPropertyFiles = propertyFiles;
-                finished = false;
+    public void readPropertiesFromPropertyFiles(Properties properties) {
+        String propertyFile = properties.getProperty("property.file");
+        if (propertyFile != null) {
+            readPropertiesFromFile(properties, propertyFile);
+        }
+        String propertyFiles = properties.getProperty("property.files");
+        if (propertyFiles != null) {
+            String[] propertyFilesArr = propertyFiles.split(",");
+            for (String file : propertyFilesArr) {
+                readPropertiesFromFile(properties, file);
             }
         }
     }
@@ -62,7 +51,10 @@ public class PropertyManager {
             throw new RuntimeException("Could not find file " + propertiesFile.getAbsolutePath());
         }
         try {
-            properties.load(new FileInputStream(propertiesFile));
+            Properties newProperties = new Properties();
+            newProperties.load(new FileInputStream(propertiesFile));
+            readPropertiesFromPropertyFiles(newProperties);
+            properties.putAll(newProperties);
             readPropertyFiles.add(propertiesFile);
         } catch (IOException e) {
             throw new PropertyException("Failed to read properties from file " + propertiesFile.getAbsolutePath(), e);
