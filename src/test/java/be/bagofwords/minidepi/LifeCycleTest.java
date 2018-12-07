@@ -5,10 +5,7 @@
 
 package be.bagofwords.minidepi;
 
-import be.bagofwords.minidepi.testbeans.Application;
-import be.bagofwords.minidepi.testbeans.BeanState;
-import be.bagofwords.minidepi.testbeans.DatabaseService;
-import be.bagofwords.minidepi.testbeans.SlowBean;
+import be.bagofwords.minidepi.testbeans.*;
 import be.bagofwords.minidepi.testbeans.circulardeps.bad.BadBean1;
 import be.bagofwords.minidepi.testbeans.circulardeps.bad.BadBean2;
 import be.bagofwords.minidepi.testbeans.circulardeps.bad.BadBean3;
@@ -41,6 +38,15 @@ public class LifeCycleTest {
         Assert.assertEquals(BeanState.STOPPED, application.beanState);
         Assert.assertEquals(BeanState.STOPPED, databaseService.beanState);
         Assert.assertFalse(applicationContext.isStarted());
+    }
+
+    @Test
+    public void testCorrecOrderOfBeanLifecycleStates() {
+        ApplicationContext applicationContext = new ApplicationContext();
+        ParentBeanWithStateTest application = applicationContext.getBean(ParentBeanWithStateTest.class);
+        Assert.assertEquals(BeanState.STARTED, application.beanState);
+        applicationContext.terminate();
+        Assert.assertEquals(BeanState.STOPPED, application.beanState);
     }
 
     @Test
@@ -107,7 +113,7 @@ public class LifeCycleTest {
     }
 
     @Test
-    public void testTestCyclicDependencies_cyclic_dependencies_between_lifecycle_beans() {
+    public void testCyclicDependencies_cyclic_dependencies_between_lifecycle_beans() {
         assertThatThrownBy(new ThrowableAssert.ThrowingCallable() {
             @Override
             public void call() {
@@ -131,7 +137,7 @@ public class LifeCycleTest {
     }
 
     @Test
-    public void testTestCyclicDependencies_cyclic_dependencies_between_non_lifecycle_beans() {
+    public void testCyclicDependencies_cyclic_dependencies_between_non_lifecycle_beans() {
         ApplicationContext applicationContext1 = new ApplicationContext();
         applicationContext1.registerBean(new GoodBean1());
         assertThatApplicationContextWasStartedAndCanBeStopped(applicationContext1);
@@ -143,7 +149,6 @@ public class LifeCycleTest {
         ApplicationContext applicationContext3 = new ApplicationContext();
         applicationContext3.registerBean(new GoodBean3());
         assertThatApplicationContextWasStartedAndCanBeStopped(applicationContext3);
-
     }
 
     public void assertThatApplicationContextWasStartedAndCanBeStopped(ApplicationContext applicationContext) {

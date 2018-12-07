@@ -25,7 +25,7 @@ public class LifeCycleManager {
     private final Set<LifeCycleBean> beansBeingStopped = new HashSet<>();
     private final Set<LifeCycleBean> beansBeingStarted = new HashSet<>();
     private final Set<LifeCycleBean> startedBeans = new HashSet<>();
-    private final MappedLists<Object, Object> startBeforeDependencies = new MappedLists<>();
+    private final MappedLists<Object, Object> runtimeDependencies = new MappedLists<>();
     private final ApplicationContext applicationContext;
     private final Object terminateLock = new Object();
 
@@ -79,8 +79,8 @@ public class LifeCycleManager {
             return;
         }
         if (bean instanceof LifeCycleBean) {
-            if (startBeforeDependencies.containsKey(bean)) {
-                waitUntilBeansStopped(startBeforeDependencies.get(bean));
+            if (runtimeDependencies.containsKey(bean)) {
+                waitUntilBeansStopped(runtimeDependencies.get(bean));
             }
             if (beansBeingStopped.contains(bean)) {
                 throw new ApplicationContextException("The stop() method of bean " + bean + " was already called. Possible cycle?");
@@ -157,7 +157,7 @@ public class LifeCycleManager {
         if (isDependent(bean, dependencyBean)) {
             throw new RuntimeException("Cyclic dependency detected between beans " + bean + " and " + dependencyBean + ". Consider setting one of the inject annotations with ensureStarted=false");
         }
-        startBeforeDependencies.get(dependencyBean).add(bean);
+        runtimeDependencies.get(dependencyBean).add(bean);
     }
 
     private boolean isDependent(Object bean, Object dependencyBean) {
@@ -167,7 +167,7 @@ public class LifeCycleManager {
         while (!dependencyChains.isEmpty()) {
             List<Object> dependencyChain = dependencyChains.remove(dependencyChains.size() - 1);
             Object lastBean = dependencyChain.get(dependencyChain.size() - 1);
-            List<Object> dependencies = startBeforeDependencies.get(lastBean);
+            List<Object> dependencies = runtimeDependencies.get(lastBean);
             for (Object dependency : dependencies) {
                 boolean isCircular = dependencyChain.contains(dependency) || dependency == dependencyBean;
                 List<Object> newDependencyChain = new ArrayList<>(dependencyChain);
