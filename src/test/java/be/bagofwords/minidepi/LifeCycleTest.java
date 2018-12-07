@@ -41,7 +41,7 @@ public class LifeCycleTest {
     }
 
     @Test
-    public void testCorrecOrderOfBeanLifecycleStates() {
+    public void testCorrectOrderOfBeanLifecycleStates() {
         ApplicationContext applicationContext = new ApplicationContext();
         ParentBeanWithStateTest application = applicationContext.getBean(ParentBeanWithStateTest.class);
         Assert.assertEquals(BeanState.STARTED, application.beanState);
