@@ -22,13 +22,15 @@ import java.util.*;
 public class BeanManager {
 
     private final ApplicationContext applicationContext;
+    private final BeanManager parentBeanManager;
     private final LifeCycleManager lifeCycleManager;
     private final List<QualifiedBean> beans = new ArrayList<>();
     private final Set<Class> beansBeingCreated = new HashSet<>();
 
-    public BeanManager(ApplicationContext applicationContext, LifeCycleManager lifeCycleManager) {
+    public BeanManager(ApplicationContext applicationContext, LifeCycleManager lifeCycleManager, BeanManager parentBeanManager) {
         this.applicationContext = applicationContext;
         this.lifeCycleManager = lifeCycleManager;
+        this.parentBeanManager = parentBeanManager;
         saveBean(applicationContext);
     }
 
@@ -107,6 +109,10 @@ public class BeanManager {
     }
 
     public <T> T getBean(Class<T> beanType, String... names) {
+        return getBeanImpl(true, beanType, names);
+    }
+
+    private <T> T getBeanImpl(boolean createIfNecessary, Class<T> beanType, String... names) {
         List<T> matchingBeans = getBeans(beanType, names);
         if (matchingBeans.size() == 1) {
             return matchingBeans.get(0);
@@ -114,14 +120,15 @@ public class BeanManager {
             String errorMessage = "Found multiple matching beans for type " + beanType.getSimpleName();
             errorMessage = appendNames(errorMessage, names);
             throw new ApplicationContextException(errorMessage);
-        } else {
-            //Does this type have the correct qualifiers? If yes, we create it
-            Set<String> qualifiers = getQualifiers(beanType);
-            boolean qualifiersMatch = names.length == 0;
-            for (String name : names) {
-                qualifiersMatch |= qualifiers.contains(name);
+        } else if (parentBeanManager != null) {
+            T bean = parentBeanManager.getBeanImpl(false, beanType, names);
+            if (bean != null) {
+                return bean;
             }
-            if (qualifiersMatch) {
+        }
+        if (createIfNecessary) {
+            //Does this type have the correct qualifiers? If yes, we create it
+            if (doQualifiersMatch(beanType, names)) {
                 createBean(beanType);
                 matchingBeans = getBeans(beanType, names);
                 if (matchingBeans.size() == 1) {
@@ -144,7 +151,18 @@ public class BeanManager {
                 errorMessage = appendNames(errorMessage, names);
             }
             throw new ApplicationContextException(errorMessage);
+        } else {
+            return null;
         }
+    }
+
+    public <T> boolean doQualifiersMatch(Class<T> beanType, String[] names) {
+        Set<String> qualifiers = getQualifiers(beanType);
+        boolean qualifiersMatch = names.length == 0;
+        for (String name : names) {
+            qualifiersMatch |= qualifiers.contains(name);
+        }
+        return qualifiersMatch;
     }
 
     public String appendNames(String errorMessage, String[] names) {

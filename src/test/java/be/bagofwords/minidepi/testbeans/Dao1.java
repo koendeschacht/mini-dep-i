@@ -10,6 +10,6 @@ import be.bagofwords.minidepi.annotations.Inject;
 public class Dao1 extends TestBean {
 
     @Inject
-    private DatabaseService databaseService;
+    public DatabaseService databaseService;
 
 }

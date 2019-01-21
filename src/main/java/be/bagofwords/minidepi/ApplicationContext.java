@@ -23,17 +23,29 @@ public class ApplicationContext implements AutoCloseable {
     private final BeanManager beanManager;
 
     public ApplicationContext() {
-        this(Collections.<String, String>emptyMap());
+        this((ApplicationContext) null);
     }
 
     public ApplicationContext(Map<String, String> config) {
-        this(mapToProperties(config));
+        this(null, mapToProperties(config));
     }
 
     public ApplicationContext(Properties properties) {
+        this(null, properties);
+    }
+
+    public ApplicationContext(ApplicationContext parentContext) {
+        this(Collections.<String, String>emptyMap(), parentContext);
+    }
+
+    public ApplicationContext(Map<String, String> config, ApplicationContext parentContext) {
+        this(parentContext, mapToProperties(config));
+    }
+
+    public ApplicationContext(ApplicationContext parentContext, Properties properties) {
         propertyManager = new PropertyManager(properties);
         lifeCycleManager = new LifeCycleManager(this);
-        beanManager = new BeanManager(this, lifeCycleManager);
+        beanManager = new BeanManager(this, lifeCycleManager, parentContext != null ? parentContext.beanManager : null);
         if (Boolean.parseBoolean(getProperty("autostart.application", "mini-dep-i.properties"))) {
             lifeCycleManager.startApplication();
         }
