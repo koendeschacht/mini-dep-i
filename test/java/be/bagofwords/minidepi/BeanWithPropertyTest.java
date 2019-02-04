@@ -39,7 +39,7 @@ public class BeanWithPropertyTest {
 
     @Test
     public void testBeanWithPropertyFromFile() {
-        System.setProperty("property.file", "src/test/resources/other.properties");
+        System.setProperty("property.file", "test/resources/other.properties");
         ApplicationContext applicationContext = new ApplicationContext();
         BeanWithPropertiesFromApplicationContext bean1 = applicationContext.getBean(BeanWithPropertiesFromApplicationContext.class);
         Assert.assertEquals("value_from_other.properties", bean1.getProperty());
@@ -50,7 +50,7 @@ public class BeanWithPropertyTest {
 
     @Test
     public void testBeanWithTransitiveProperties() {
-        System.setProperty("property.file", "src/test/resources/file_with_transitive_properties.properties");
+        System.setProperty("property.file", "test/resources/file_with_transitive_properties.properties");
         ApplicationContext applicationContext = new ApplicationContext();
         BeanWithTwoProperties bean2 = applicationContext.getBean(BeanWithTwoProperties.class);
         Assert.assertEquals("value_from_other.properties", bean2.getProperty1());
@@ -60,7 +60,7 @@ public class BeanWithPropertyTest {
 
     @Test
     public void testBeanWithOverwrittenTransitiveProperties() {
-        System.setProperty("property.files", "src/test/resources/overwritten.properties, src/test/resources/not_overwritten.properties");
+        System.setProperty("property.files", "test/resources/overwritten.properties, test/resources/not_overwritten.properties");
         ApplicationContext applicationContext = new ApplicationContext();
         BeanWithWiredProperties bean2 = applicationContext.getBean(BeanWithWiredProperties.class);
         Assert.assertEquals("my_value", bean2.getProperty());
@@ -69,7 +69,7 @@ public class BeanWithPropertyTest {
 
     @Test
     public void testBeanWithPropertiesFromMultipleFiles() {
-        System.setProperty("property.files", "src/test/resources/other.properties, src/test/resources/yet_other.properties");
+        System.setProperty("property.files", "test/resources/other.properties, test/resources/yet_other.properties");
         ApplicationContext applicationContext = new ApplicationContext();
         BeanWithTwoProperties bean2 = applicationContext.getBean(BeanWithTwoProperties.class);
         Assert.assertEquals("value_from_other.properties", bean2.getProperty1());

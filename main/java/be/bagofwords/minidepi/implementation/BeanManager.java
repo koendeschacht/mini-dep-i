@@ -6,10 +6,7 @@
 package be.bagofwords.minidepi.implementation;
 
 import be.bagofwords.logging.Log;
-import be.bagofwords.minidepi.ApplicationContext;
-import be.bagofwords.minidepi.ApplicationContextException;
-import be.bagofwords.minidepi.LifeCycleBean;
-import be.bagofwords.minidepi.PropertyException;
+import be.bagofwords.minidepi.*;
 import be.bagofwords.minidepi.annotations.Bean;
 import be.bagofwords.minidepi.annotations.Inject;
 import be.bagofwords.minidepi.annotations.Property;
@@ -257,12 +254,16 @@ public class BeanManager {
             Class<?> currClass = bean.getClass();
             while (!currClass.equals(Object.class)) {
                 wireFields(bean, currClass);
+                if (bean instanceof OnWiredListener) {
+                    ((OnWiredListener) bean).onWired(applicationContext);
+                }
                 currClass = currClass.getSuperclass();
             }
         } catch (IllegalAccessException exp) {
             throw new ApplicationContextException("Failed to wire bean " + bean, exp);
         }
     }
+
 
     private void wireFields(Object bean, Class<?> beanClass) throws IllegalAccessException {
         Field[] fields = beanClass.getDeclaredFields();

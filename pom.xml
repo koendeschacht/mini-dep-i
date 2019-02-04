@@ -1,60 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  ~ Created by Koen Deschacht (koendeschacht@gmail.com) 2017-3-11. For license
-  ~ information see the LICENSE file in the root folder of this repository.
-  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.koendeschacht</groupId>
-    <artifactId>mini-dep-i</artifactId>
-    <version>master-SNAPSHOT</version>
-
-    <properties>
-        <slf4j-version>1.7.24</slf4j-version>
-        <junit-version>4.12</junit-version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <parent>
+        <groupId>coach.stepwise</groupId>
+        <artifactId>parent</artifactId>
+        <version>master-SNAPSHOT</version>
+    </parent>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
+    <artifactId>java-dependency-injection</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>com.github.koendeschacht</groupId>
-            <artifactId>bow-utils</artifactId>
+            <groupId>coach.stepwise</groupId>
+            <artifactId>java-utils</artifactId>
             <version>master-SNAPSHOT</version>
         </dependency>
+
+        <!-- TEST DEPENDENCIES -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
